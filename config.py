@@ -19,4 +19,5 @@ SCRAPER_SETTINGS = {
 }
 
 OUTPUT_FILE = "output/results.html"
+INSIGHTS_FILE = "output/insights.html"
 TOP_N_RESULTS = 150

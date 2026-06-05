@@ -2,12 +2,13 @@ import logging
 import os
 import sys
 
-from config import FILTERS, OUTPUT_FILE, SCRAPER_SETTINGS, TOP_N_RESULTS
+from config import FILTERS, OUTPUT_FILE, INSIGHTS_FILE, SCRAPER_SETTINGS, TOP_N_RESULTS
 from models import CarListing
 from scrapers.autoplius import AutopliusScraper
 from scrapers.autogidas import AutogidasScraper
 from scorer import score_listings
-from renderer import render_html
+from insights import compute_insights
+from renderer import render_html, render_insights_html
 from storage import DATA_FILE, is_cache_fresh, load_listings, merge_price_history, save_listings
 
 logging.basicConfig(
@@ -97,9 +98,13 @@ def main():
     score_range = f"{top[-1].deal_score:.1f} – {top[0].deal_score:.1f}" if top else "n/a"
     logger.info("Top %d deals (score range: %s)", len(top), score_range)
 
+    insights = compute_insights(scored)
     render_html(top, OUTPUT_FILE)
-    print(f"\nDone! Open {OUTPUT_FILE} in your browser.")
-    print(f"Listings saved to {DATA_FILE} (run with --fresh to re-scrape)")
+    render_insights_html(scored, insights, INSIGHTS_FILE)
+    print(f"\nDone!")
+    print(f"  Listings : {OUTPUT_FILE}")
+    print(f"  Insights : {INSIGHTS_FILE}")
+    print(f"  Data     : {DATA_FILE} (run with --fresh to re-scrape)")
 
 
 if __name__ == "__main__":

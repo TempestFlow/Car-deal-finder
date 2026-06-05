@@ -921,3 +921,408 @@ def render_html(listings: list, output_path: str):
         f.write(html)
 
     print(f"Output written to: {output_path}")
+
+
+# ── Market Insights page ──────────────────────────────────────────────────────
+
+INSIGHTS_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Insights &mdash; Car Deal Finder</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #0f172a;
+  --navy-mid: #1e293b;
+  --navy-light: #334155;
+  --accent: #3b82f6;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --green-text: #15803d;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
+  --amber-text: #92400e;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --red-text: #991b1b;
+  --bg: #f1f5f9;
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --subtle: #94a3b8;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+header {
+  background: linear-gradient(140deg, #0a0f1e 0%, #0f2a4a 50%, #0a0f1e 100%);
+  padding: 36px 40px 32px;
+  position: relative;
+  overflow: hidden;
+}
+header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 80% 40%, rgba(59,130,246,0.18) 0%, transparent 55%),
+              radial-gradient(ellipse at 20% 80%, rgba(99,102,241,0.10) 0%, transparent 50%);
+  pointer-events: none;
+}
+.header-inner {
+  position: relative; z-index: 1;
+  max-width: 1200px; margin: 0 auto;
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 32px; flex-wrap: wrap;
+}
+.header-brand h1 { font-size: 2rem; font-weight: 800; color: #fff; letter-spacing: -0.03em; }
+.header-brand p { font-size: 0.88rem; color: #64748b; margin-top: 3px; }
+.header-link {
+  color: #60a5fa; font-size: 0.83rem; font-weight: 600; text-decoration: none;
+  border: 1px solid rgba(96,165,250,0.3); padding: 7px 16px; border-radius: 8px;
+  background: rgba(59,130,246,0.1); transition: background 0.15s;
+}
+.header-link:hover { background: rgba(59,130,246,0.2); }
+
+.stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.stat {
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px; padding: 14px 22px; min-width: 118px;
+  text-align: center; backdrop-filter: blur(10px);
+}
+.stat-label { font-size: 0.67rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600; }
+.stat-value { font-size: 1.6rem; font-weight: 800; color: #fff; margin-top: 3px; }
+.stat-value.blue { color: #60a5fa; }
+.stat-value.green { color: #4ade80; }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 32px 40px 60px; }
+
+.section { background: var(--surface); border-radius: 16px; border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 28px; overflow: hidden; }
+.section-header {
+  padding: 20px 26px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+}
+.section-title { font-size: 1.05rem; font-weight: 800; color: var(--navy); letter-spacing: -0.01em; }
+.section-sub { font-size: 0.79rem; color: var(--muted); }
+.section-body { padding: 20px 26px 24px; }
+
+/* ── Bar charts ─────────────────────────────────────────────────────────── */
+.bar-list { display: flex; flex-direction: column; gap: 9px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { width: 140px; font-size: 0.79rem; font-weight: 600; color: var(--text); flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-label.wide { width: 200px; }
+.bar-track { flex: 1; height: 8px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+.bf-blue   { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+.bf-green  { background: linear-gradient(90deg, #4ade80, #16a34a); }
+.bf-amber  { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
+.bf-red    { background: linear-gradient(90deg, #f87171, #ef4444); }
+.bar-value { width: 80px; text-align: right; font-size: 0.79rem; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.bar-count { font-size: 0.71rem; color: var(--subtle); margin-left: 6px; white-space: nowrap; }
+
+/* double bar rows (dealer vs private) */
+.dbar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.dbar-make { width: 130px; font-size: 0.82rem; font-weight: 700; color: var(--text); flex-shrink: 0; }
+.dbar-col { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.dbar-line { display: flex; align-items: center; gap: 8px; }
+.dbar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.dbar-track { flex: 1; height: 6px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+.dbar-fill { height: 100%; border-radius: 99px; }
+.df-dealer  { background: linear-gradient(90deg, #fcd34d, #f59e0b); }
+.df-private { background: linear-gradient(90deg, #4ade80, #16a34a); }
+.dbar-val { width: 70px; text-align: right; font-size: 0.76rem; font-weight: 600; color: var(--muted); flex-shrink: 0; }
+.markup-badge {
+  font-size: 0.72rem; font-weight: 800; padding: 3px 8px; border-radius: 20px;
+  white-space: nowrap; flex-shrink: 0; width: 52px; text-align: center;
+}
+.mb-red    { background: var(--red-bg);   border: 1px solid var(--red-border);   color: var(--red-text); }
+.mb-amber  { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber-text); }
+.mb-green  { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green-text); }
+
+/* callout box */
+.callout {
+  background: linear-gradient(135deg, #fef9c3 0%, #fef3c7 100%);
+  border: 1px solid #fde68a; border-radius: 10px;
+  padding: 12px 16px; margin-bottom: 20px;
+  font-size: 0.82rem; color: #78350f; font-weight: 600;
+}
+
+/* market pressure table */
+.pressure-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.pressure-table th {
+  text-align: left; padding: 8px 12px; border-bottom: 2px solid var(--border);
+  color: var(--muted); font-size: 0.71rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+}
+.pressure-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.pressure-table tr:last-child td { border-bottom: none; }
+.pressure-pill {
+  display: inline-block; font-size: 0.72rem; font-weight: 800;
+  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
+}
+.pp-high   { background: var(--green-bg); border: 1px solid var(--green-border); color: var(--green-text); }
+.pp-mid    { background: var(--amber-bg); border: 1px solid var(--amber-border); color: var(--amber-text); }
+.pp-low    { background: var(--red-bg);   border: 1px solid var(--red-border);   color: var(--red-text); }
+.pressure-note { font-size: 0.74rem; color: var(--muted); margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+/* toggle buttons */
+.toggle-group { display: flex; gap: 4px; margin-left: auto; }
+.tgl {
+  padding: 5px 12px; border: 1.5px solid var(--border); border-radius: 7px;
+  background: var(--bg); font-size: 0.76rem; font-weight: 600; color: var(--muted);
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+}
+.tgl.active { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+@media (max-width: 700px) {
+  header { padding: 22px 18px 20px; }
+  .page { padding: 16px 14px 40px; }
+  .section-body { padding: 14px 16px 18px; }
+  .bar-label, .dbar-make { width: 90px; }
+  .bar-value { width: 60px; }
+  .header-inner { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="header-brand">
+      <h1>Market Insights</h1>
+      <p>Lithuania &mdash; autoplius.lt &amp; autogidas.lt &mdash; {{ s.freshness_date }}</p>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Listings</div>
+        <div class="stat-value">{{ s.total_listings }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Makes</div>
+        <div class="stat-value blue">{{ s.makes_count }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Avg Price</div>
+        <div class="stat-value">&euro;{{ s.avg_price | int }}</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Tracked</div>
+        <div class="stat-value green">{{ s.tracked_listings }}</div>
+      </div>
+    </div>
+    <a class="header-link" href="results.html">&larr; Back to listings</a>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- ── Section 1: Average price by make ─────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">&#9632; Average Price by Make</span>
+      <span class="section-sub">Median asking price across all scraped listings</span>
+      <div class="toggle-group">
+        <button class="tgl active" id="tgl-median" onclick="setPriceMode('median',this)">Median</button>
+        <button class="tgl" id="tgl-avg" onclick="setPriceMode('avg',this)">Average</button>
+      </div>
+    </div>
+    <div class="section-body">
+      <div class="bar-list" id="price-bars">
+        {% set max_med = price_by_make[0].median_price if price_by_make else 1 %}
+        {% for row in price_by_make %}
+        <div class="bar-row"
+          data-median="{{ row.median_price }}"
+          data-avg="{{ row.avg_price }}"
+          data-max-median="{{ max_med }}"
+          data-max-avg="{{ price_by_make | map(attribute='avg_price') | max }}">
+          <span class="bar-label" title="{{ row.make }}">{{ row.make }}</span>
+          <div class="bar-track">
+            <div class="bar-fill bf-blue" style="width:{{ (row.median_price / max_med * 100) | round(1) }}%"></div>
+          </div>
+          <span class="bar-value" id="bv-{{ loop.index }}">&euro;{{ '{:,}'.format(row.median_price) }}</span>
+          <span class="bar-count">{{ row.count }} listings</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section 2: Dealer markup ─────────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">&#9632; Dealer vs Private Markup</span>
+      <span class="section-sub">How much more dealers charge vs private sellers (same make)</span>
+    </div>
+    <div class="section-body">
+      {% if dealer_markup %}
+      {% set top = dealer_markup[0] %}
+      <div class="callout">
+        &#x1F3F7; Biggest markup: <strong>{{ top.make }}</strong> &mdash;
+        dealers charge <strong>{{ top.markup_pct }}%</strong> more than private sellers
+        (&euro;{{ '{:,}'.format(top.dealer_median) }} vs &euro;{{ '{:,}'.format(top.private_median) }})
+      </div>
+      {% endif %}
+      {% set max_price = (dealer_markup | map(attribute='dealer_median') | max) if dealer_markup else 1 %}
+      <div class="bar-list">
+        {% for row in dealer_markup %}
+        <div class="dbar-row">
+          <span class="dbar-make" title="{{ row.make }}">{{ row.make }}</span>
+          <div class="dbar-col">
+            <div class="dbar-line">
+              <span class="dbar-dot" style="background:#f59e0b"></span>
+              <div class="dbar-track"><div class="dbar-fill df-dealer" style="width:{{ (row.dealer_median / max_price * 100) | round(1) }}%"></div></div>
+              <span class="dbar-val">&euro;{{ '{:,}'.format(row.dealer_median) }}</span>
+            </div>
+            <div class="dbar-line">
+              <span class="dbar-dot" style="background:#16a34a"></span>
+              <div class="dbar-track"><div class="dbar-fill df-private" style="width:{{ (row.private_median / max_price * 100) | round(1) }}%"></div></div>
+              <span class="dbar-val">&euro;{{ '{:,}'.format(row.private_median) }}</span>
+            </div>
+          </div>
+          {% if row.markup_pct > 15 %}
+          <span class="markup-badge mb-red">+{{ row.markup_pct }}%</span>
+          {% elif row.markup_pct > 5 %}
+          <span class="markup-badge mb-amber">+{{ row.markup_pct }}%</span>
+          {% elif row.markup_pct > 0 %}
+          <span class="markup-badge mb-green">+{{ row.markup_pct }}%</span>
+          {% else %}
+          <span class="markup-badge mb-green">{{ row.markup_pct }}%</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      <p style="font-size:0.73rem;color:var(--muted);margin-top:14px;">
+        &#x25A0; Amber = dealer median &nbsp;&#x25A0; Green = private median &nbsp;&bull;&nbsp;
+        Requires &ge;2 dealer &amp; &ge;2 private listings per make.
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Section 3: Price drop leaderboard ────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">&#9632; Price Drop Leaderboard</span>
+      <span class="section-sub">Models where sellers most often reduce the asking price (based on tracked listings with 2+ price points)</span>
+    </div>
+    <div class="section-body">
+      {% if price_drop_freq %}
+      <div class="bar-list">
+        {% for row in price_drop_freq %}
+        <div class="bar-row">
+          <span class="bar-label wide" title="{{ row.label }}">{{ row.label }}</span>
+          <div class="bar-track">
+            <div class="bar-fill {% if row.drop_pct >= 50 %}bf-red{% elif row.drop_pct >= 25 %}bf-amber{% else %}bf-blue{% endif %}"
+              style="width:{{ row.drop_pct }}%"></div>
+          </div>
+          <span class="bar-value">{{ row.drop_pct }}%</span>
+          <span class="bar-count">{{ row.drops }}/{{ row.total }} listings</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:var(--muted);font-size:0.85rem;">
+        Not enough multi-run data yet. Price drops are detected when the same listing appears in multiple scrape runs at a lower price. Run <code>python main.py --fresh</code> regularly to build up price history.
+      </p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── Section 4: Market pressure ──────────────────────────────────── -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">&#9632; Is Now a Good Time to Buy?</span>
+      <span class="section-sub">Market pressure by make &mdash; higher score = more motivated sellers</span>
+    </div>
+    <div class="section-body">
+      <table class="pressure-table">
+        <thead>
+          <tr>
+            <th>Make</th>
+            <th>Buyer Signal</th>
+            <th>Price drops</th>
+            <th>Avg days listed</th>
+            <th>Stale &gt;30d</th>
+            <th>Listings</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in market_pressure %}
+          <tr>
+            <td><strong>{{ row.make }}</strong></td>
+            <td>
+              {% if row.pressure >= 0.35 %}
+              <span class="pressure-pill pp-high">&#9650; Buy now</span>
+              {% elif row.pressure >= 0.18 %}
+              <span class="pressure-pill pp-mid">&#9644; Neutral</span>
+              {% else %}
+              <span class="pressure-pill pp-low">&#9660; Wait</span>
+              {% endif %}
+            </td>
+            <td>{{ row.drop_rate }}%</td>
+            <td>{{ row.avg_age_days }}d</td>
+            <td>{{ row.stale_rate }}%</td>
+            <td>{{ row.count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="pressure-note">
+        <strong>Buyer signal</strong> combines: price drop rate (50%), average listing age (30%), stale listing rate (40%+ days, 20%).
+        A high signal means more sellers are reducing prices and/or listings are sitting unsold — both signs of a buyer&rsquo;s market.
+        Data reflects a single snapshot; run regularly to track trends over time.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var priceMode = 'median';
+
+function setPriceMode(mode, btn) {
+  priceMode = mode;
+  document.querySelectorAll('.tgl').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  var rows = document.querySelectorAll('#price-bars .bar-row');
+  rows.forEach(function(row, i) {
+    var val = parseFloat(row.dataset[mode]);
+    var maxVal = parseFloat(mode === 'median' ? row.dataset.maxMedian : row.dataset.maxAvg);
+    var fill = row.querySelector('.bar-fill');
+    var label = row.querySelector('.bar-value');
+    fill.style.width = (val / maxVal * 100).toFixed(1) + '%';
+    label.textContent = '€' + Math.round(val).toLocaleString();
+  });
+}
+</script>
+</body>
+</html>
+"""
+
+
+def render_insights_html(listings: list, insights: dict, output_path: str):
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+
+    env = Environment(loader=BaseLoader())
+    tmpl = env.from_string(INSIGHTS_TEMPLATE)
+    html = tmpl.render(
+        s=insights["summary"],
+        price_by_make=insights["price_by_make"],
+        dealer_markup=insights["dealer_markup"],
+        price_drop_freq=insights["price_drop_freq"],
+        market_pressure=insights["market_pressure"],
+    )
+
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    print(f"Insights written to: {output_path}")
