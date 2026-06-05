@@ -139,6 +139,77 @@ header::after {
 .metric-table tr:not(:last-child) td { border-bottom: 1px solid rgba(255,255,255,0.03); }
 .formula-block { font-family: 'Courier New', monospace; background: #0a0f1e; border: 1px solid rgba(255,255,255,0.07); padding: 12px 14px; border-radius: 8px; font-size: 0.76rem; color: #93c5fd; line-height: 1.8; margin-top: 8px; }
 
+/* ── Reliable Cars section ───────────────── */
+.reliable-section {
+  background: var(--navy-mid);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.reliable-section summary {
+  padding: 10px 40px;
+  color: #64748b;
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 1560px;
+  margin: 0 auto;
+  transition: color 0.15s;
+}
+.reliable-section summary:hover { color: #94a3b8; }
+.reliable-section summary::-webkit-details-marker { display: none; }
+.reliable-section summary::before { content: '\25B6'; font-size: 0.6rem; transition: transform 0.2s; }
+.reliable-section[open] summary::before { transform: rotate(90deg); }
+.reliable-body {
+  padding: 20px 40px 28px;
+  max-width: 1560px;
+  margin: 0 auto;
+}
+.reliable-body h3 { color: #cbd5e1; font-size: 0.78rem; font-weight: 700; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.07em; }
+.reliable-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.reliable-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: background 0.18s;
+}
+.reliable-card:hover { background: rgba(255,255,255,0.07); }
+.reliable-card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.reliable-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.rb-legendary { background: rgba(20,83,45,0.7);   color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+.rb-excellent  { background: rgba(29,78,216,0.5);  color: #93c5fd; border: 1px solid rgba(59,130,246,0.35); }
+.rb-great      { background: rgba(88,28,135,0.5);  color: #d8b4fe; border: 1px solid rgba(168,85,247,0.35); }
+.reliable-name { font-size: 0.88rem; font-weight: 700; color: #e2e8f0; }
+.reliable-reasons { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.reliable-reasons li { font-size: 0.74rem; color: #64748b; line-height: 1.5; display: flex; gap: 6px; }
+.reliable-reasons li::before { content: '·'; color: #4ade80; font-weight: 900; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .reliable-section summary { padding: 9px 18px; }
+  .reliable-body { padding: 16px 18px 22px; }
+  .reliable-grid { grid-template-columns: 1fr; }
+}
+
 /* ── Controls bar ────────────────────────── */
 .controls {
   background: rgba(255,255,255,0.96);
@@ -348,6 +419,10 @@ header::after {
 .spec.s-dealer   { background: var(--amber-bg);  border-color: var(--amber-border);  color: var(--amber-text); }
 .spec.s-autoplius { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
 .spec.s-autogidas { background: #faf5ff; border-color: #e9d5ff; color: #6b21a8; }
+.spec.s-city     { background: #f0f9ff; border-color: #bae6fd; color: #0369a1; }
+.spec.s-ta-good  { background: var(--green-bg);  border-color: var(--green-border);  color: var(--green-text); }
+.spec.s-ta-soon  { background: var(--amber-bg);  border-color: var(--amber-border);  color: var(--amber-text); }
+.spec.s-ta-bad   { background: var(--red-bg);    border-color: var(--red-border);    color: var(--red-text); }
 
 /* Metric bars */
 .metrics { border-top: 1px solid var(--border); padding-top: 9px; margin-bottom: 13px; display: flex; flex-direction: column; gap: 5px; }
@@ -467,7 +542,129 @@ header::after {
         <div class="score-legend-item"><span class="dot" style="background:#ef4444"></span><span><strong style="color:#cbd5e1">&lt; 40 &mdash; Below average.</strong> Overpriced, high mileage, or stale listing.</span></div>
       </div>
       <h3 style="margin-top:18px">Formula &amp; Adjustments</h3>
-      <div class="formula-block">score = price&times;0.40 + mileage&times;0.30<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ freshness&times;0.15 + seller&times;0.15<br><br><span style="color:#4ade80">+ 5&ndash;10</span> reliability bonus (Toyota, Honda, Lexus&hellip;)<br><span style="color:#f87171">&minus; 30&nbsp;&nbsp;&nbsp;</span> damage penalty (accident / body damage)</div>
+      <div class="formula-block">score = price&times;0.40 + mileage&times;0.30<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ freshness&times;0.15 + seller&times;0.15<br><br><span style="color:#4ade80">+ 5&ndash;10</span> reliability bonus (Toyota, Honda, Lexus&hellip;)<br><span style="color:#4ade80">+ 3&ndash;8&nbsp;&nbsp;</span> TA bonus (&gt;6 months left)<br><span style="color:#fbbf24">+ 0&ndash;3&nbsp;&nbsp;</span> TA small bonus (3&ndash;6 months left)<br><span style="color:#f87171">&minus; 7&ndash;10</span> TA penalty (expired or no TA)<br><span style="color:#f87171">&minus; 30&nbsp;&nbsp;&nbsp;</span> damage penalty (accident / body damage)</div>
+    </div>
+  </div>
+</details>
+
+<details class="reliable-section">
+  <summary>Reliable cars reference guide</summary>
+  <div class="reliable-body">
+    <h3>Well-proven models &mdash; historically low ownership costs &amp; high longevity</h3>
+    <div class="reliable-grid">
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Toyota Corolla</span>
+          <span class="reliable-badge rb-legendary">Legendary</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>Consistently top-ranked in long-term reliability surveys worldwide</li>
+          <li>Simple, over-engineered 1.6&ndash;2.0 petrol engines rarely fail</li>
+          <li>Huge parts availability keeps repair costs minimal</li>
+          <li>Rust resistance better than most European rivals</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Toyota Camry</span>
+          <span class="reliable-badge rb-legendary">Legendary</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>2.5 hybrid drivetrain routinely exceeds 400,000 km without major work</li>
+          <li>Toyota&rsquo;s flagship saloon; engineering tolerances are exceptionally tight</li>
+          <li>Low depreciation signals strong residual trust from the market</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Lexus IS / ES</span>
+          <span class="reliable-badge rb-legendary">Legendary</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>Toyota mechanicals with premium build quality &mdash; best of both worlds</li>
+          <li>Hybrid variants have near-zero transmission issues vs. German rivals</li>
+          <li>Dealer service records very common, adding confidence at purchase</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Honda Civic (2006&ndash;2021)</span>
+          <span class="reliable-badge rb-excellent">Excellent</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>1.8 i-VTEC and 2.0 engines are among the longest-lasting 4-cylinders made</li>
+          <li>Simple suspension geometry means low wear even on rough Lithuanian roads</li>
+          <li>High owner satisfaction in JD Power studies for 15+ consecutive years</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Mazda3 / Mazda6</span>
+          <span class="reliable-badge rb-excellent">Excellent</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>SkyActiv engines avoid turbochargers, eliminating a major failure point</li>
+          <li>Corrosion protection improved significantly from 2013 onward</li>
+          <li>Consistently low repair frequency in European consumer reports</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Skoda Octavia (2013+)</span>
+          <span class="reliable-badge rb-great">Great</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>VW Group MQB platform &mdash; well-proven, parts everywhere in Lithuania</li>
+          <li>1.6 TDI diesel is a workhorse engine with 300,000+ km potential</li>
+          <li>Practical estate body popular with local buyers, strong resale value</li>
+          <li>Cheaper to maintain than equivalent VW/Audi by 20&ndash;30%</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Subaru Outback / Forester</span>
+          <span class="reliable-badge rb-great">Great</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>Symmetrical AWD standard on all variants &mdash; no torque-split failures</li>
+          <li>Boxer engines run cool and last well when serviced on schedule</li>
+          <li>Head gaskets on pre-2012 EJ engines are the one known weak point &mdash; check service history</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Toyota Land Cruiser</span>
+          <span class="reliable-badge rb-legendary">Legendary</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>1HZ and 1VD-FTV diesel engines are routinely driven 500,000+ km</li>
+          <li>Body-on-frame construction makes structural repairs straightforward</li>
+          <li>Preferred by humanitarian organizations for guaranteed field reliability</li>
+          <li>Strong demand keeps resale value high even at high mileage</li>
+        </ul>
+      </div>
+
+      <div class="reliable-card">
+        <div class="reliable-card-header">
+          <span class="reliable-name">Volvo V70 / XC70 (2007&ndash;2016)</span>
+          <span class="reliable-badge rb-great">Great</span>
+        </div>
+        <ul class="reliable-reasons">
+          <li>D5 diesel engine is tough and well-understood by Baltic mechanics</li>
+          <li>Excellent passive safety ratings add real-world value on rural roads</li>
+          <li>Estate format very practical; large used-parts market in Lithuania</li>
+          <li>Avoid the early DPF and DSTC modules &mdash; all others are low-risk</li>
+        </ul>
+      </div>
+
     </div>
   </div>
 </details>
@@ -507,6 +704,15 @@ header::after {
       <option value="autogidas">autogidas</option>
     </select>
   </div>
+  <div class="filter-group">
+    <label for="filter-city">City</label>
+    <select id="filter-city" onchange="applyFilters()">
+      <option value="">All cities</option>
+      {% for ct in cities %}
+      <option value="{{ ct | lower }}">{{ ct }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div class="ctrl-sep"></div>
   <div class="filter-group">
     <label for="filter-price">Max &euro;</label>
@@ -534,7 +740,8 @@ header::after {
     data-mileage="{{ car.mileage }}"
     data-year="{{ car.year }}"
     data-score="{{ car.deal_score }}"
-    data-make="{{ car.make | lower }}">
+    data-make="{{ car.make | lower }}"
+    data-city="{{ car.city | lower }}">
 
     <div class="card-img-wrap">
       {% if car.images %}
@@ -582,8 +789,18 @@ header::after {
         {% if car.year %}<span class="spec">{{ car.year }}</span>{% endif %}
         {% if car.fuel_type %}<span class="spec">{{ car.fuel_type }}</span>{% endif %}
         {% if car.mileage %}<span class="spec">{{ '{:,}'.format(car.mileage) }} km</span>{% endif %}
+        {% if car.city %}<span class="spec s-city" title="City">&#x1F4CD; {{ car.city }}</span>{% endif %}
         <span class="spec s-{{ car.seller_type }}">{{ car.seller_type | capitalize }}</span>
         <span class="spec s-{{ car.source }}">{{ car.source }}</span>
+        {%- if car.ta_months_left > 6 %}
+        <span class="spec s-ta-good" title="Techninė apžiūra valid for ~{{ car.ta_months_left }} months">TA &#10003; {{ car.technical_inspection }}</span>
+        {%- elif car.ta_months_left > 0 %}
+        <span class="spec s-ta-soon" title="Techninė apžiūra expiring in ~{{ car.ta_months_left }} months">TA &#9888; {{ car.technical_inspection }}</span>
+        {%- elif car.ta_months_left == 0 %}
+        <span class="spec s-ta-bad" title="No valid Techninė apžiūra">No TA</span>
+        {%- elif car.ta_months_left < -1 %}
+        <span class="spec s-ta-bad" title="Techninė apžiūra expired">TA Expired</span>
+        {%- endif %}
       </div>
 
       <div class="metrics">
@@ -639,6 +856,7 @@ function applyFilters() {
   var seller   = document.getElementById('filter-seller').value.toLowerCase();
   var fuel     = document.getElementById('filter-fuel').value.toLowerCase();
   var source   = document.getElementById('filter-source').value.toLowerCase();
+  var city     = document.getElementById('filter-city').value.toLowerCase();
   var maxPrice = parseFloat(document.getElementById('filter-price').value) || Infinity;
 
   var grid  = document.getElementById('card-grid');
@@ -649,6 +867,7 @@ function applyFilters() {
     if (seller && c.dataset.seller !== seller)                    return false;
     if (fuel   && c.dataset.fuel.toLowerCase() !== fuel)         return false;
     if (source && c.dataset.source !== source)                    return false;
+    if (city   && c.dataset.city   !== city)                      return false;
     if (parseFloat(c.dataset.price) > maxPrice)                   return false;
     return true;
   });
@@ -684,6 +903,7 @@ def render_html(listings: list, output_path: str):
     best_score = max((l.deal_score for l in listings), default=0)
     fuel_types = sorted({l.fuel_type for l in listings if l.fuel_type})
     makes = sorted({l.make for l in listings if l.make})
+    cities = sorted({l.city for l in listings if l.city})
 
     env = Environment(loader=BaseLoader())
     tmpl = env.from_string(TEMPLATE)
@@ -694,6 +914,7 @@ def render_html(listings: list, output_path: str):
         best_score=round(best_score, 1),
         fuel_types=fuel_types,
         makes=makes,
+        cities=cities,
     )
 
     with open(output_path, "w", encoding="utf-8") as f:

@@ -26,3 +26,7 @@ class CarListing:
     damage: bool = False
     damage_info: str = ""
     reliability_bonus: float = 0.0
+    city: str = ""
+    technical_inspection: str = ""  # raw scraped value e.g. "2025-12", "Nėra"
+    ta_months_left: int = -1        # -1=unknown, 0=no TA, negative=expired, positive=months left
+    ta_bonus: float = 0.0

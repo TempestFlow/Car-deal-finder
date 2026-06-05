@@ -37,6 +37,37 @@ FUEL_KEYWORDS = {
 DAMAGE_KEYWORDS = ["avarinis", "daužtas", "sudaužtas", "kėbulo žala", "avarija", "pažeistas", "žala"]
 UNDAMAGED_KEYWORDS = ["nepažeistas", "nesudaužtas"]
 
+# Known Lithuanian cities/towns — nominative AND genitive forms (lowercase).
+# Genitive is used by autoplius in district labels: "Vilniaus r.", "Kauno m." etc.
+LITHUANIAN_CITIES: set[str] = {
+    # Nominative
+    "vilnius", "kaunas", "klaipėda", "klaipeda", "šiauliai", "siauliai",
+    "panevėžys", "panevezys", "alytus", "marijampolė", "marijampole",
+    "mažeikiai", "mazeikiai", "jonava", "utena", "kėdainiai", "kedainiai",
+    "telšiai", "telsiai", "tauragė", "taurage", "ukmergė", "ukmerge",
+    "visaginas", "plungė", "plunge", "kretinga", "radviliškis", "radviliskis",
+    "palanga", "druskininkai", "elektrėnai", "elektroenai", "gargždai", "gargzdai",
+    "jurbarkas", "rokiškis", "rokiskis", "biržai", "birzai", "kuršėnai",
+    "varėna", "varena", "zarasai", "skuodas", "šakiai", "sakiai",
+    "vilkaviškis", "vilkaviskis", "prienai", "lazdijai", "šilutė", "silute",
+    "šilalė", "silale", "raseiniai", "kelmė", "kelme", "joniškis", "joniskis",
+    "pakruojis", "trakai", "molėtai", "moletai", "ignalina", "neringa",
+    "švenčionys", "svenciones", "akmenė", "akmene", "rietavas",
+    # Genitive forms (used in "Vilniaus r.", "Kauno m." district labels)
+    "vilniaus", "kauno", "klaipėdos", "klaipedos", "šiaulių", "siauliu",
+    "panevėžio", "panevezio", "alytaus", "marijampolės", "marijampoles",
+    "mažeikių", "mazeikiu", "utenos", "kėdainių", "kedainiu",
+    "telšių", "telsiu", "tauragės", "taurages", "ukmergės", "ukmerges",
+    "plungės", "plunges", "kretingos", "radviliškio", "radviliskio",
+    "palangos", "druskininkų", "elektrėnų", "elektrenu", "gargždų", "gargzdu",
+    "jurbarko", "rokiškio", "rokiskio", "biržų", "birzų", "kuršėnų",
+    "varėnos", "varenos", "zarasų", "skuodo", "šakių", "sakiu",
+    "vilkaviškio", "vilkaviskio", "prienų", "lazdijų", "šilutės", "silutes",
+    "šilalės", "silales", "raseinių", "kelmės", "kelmes", "joniškio", "joniskio",
+    "pakruojo", "trakų", "traku", "molėtų", "moletu", "ignalinos", "neringos",
+    "švenčionių", "svencioniu", "akmenės", "akmenes",
+}
+
 
 def _normalize_fuel(text: str) -> str:
     low = text.lower()
@@ -67,6 +98,9 @@ class AutopliusScraper(BaseScraper):
         else:
             make_jobs = [("all", None)]
 
+        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
+        search_cache = self.settings.get("use_html_cache", True)
+
         for make_name, make_id in make_jobs:
             base_params = self._build_params(make_id)
             logger.info("autoplius: scraping make=%s (id=%s)", make_name, make_id)
@@ -76,7 +110,7 @@ class AutopliusScraper(BaseScraper):
                 url = f"{BASE_URL}{SEARCH_PATH}?{urlencode(params)}"
                 logger.info("autoplius page %d: %s", page, url)
 
-                soup = self._get_page(url)
+                soup = self._get_page(url, use_cache=search_cache)
                 if soup is None:
                     break
 
@@ -148,12 +182,17 @@ class AutopliusScraper(BaseScraper):
         year = _parse_year(params[0]) if params else 0
         fuel_type = ""
         mileage = 0
+        city = ""
         for p in params[1:]:
-            low = p.lower()
+            low = p.lower().strip()
             if not fuel_type and any(k in low for k in FUEL_KEYWORDS):
                 fuel_type = _normalize_fuel(p)
             if not mileage and low.endswith("km"):
                 mileage = _parse_int(p)
+            if not city:
+                matched = _match_city(p)
+                if matched:
+                    city = matched
 
         make, model = _split_make_model(title, year)
 
@@ -178,6 +217,7 @@ class AutopliusScraper(BaseScraper):
             images=images,
             damage=damage,
             damage_info=damage_info,
+            city=city,
         )
 
     def _enrich_detail(self, listing: CarListing):
@@ -210,6 +250,70 @@ class AutopliusScraper(BaseScraper):
             if damage:
                 listing.damage = damage
                 listing.damage_info = damage_info
+
+        # Techninė apžiūra (Technical Inspection / MOT)
+        if not listing.technical_inspection:
+            listing.technical_inspection = _extract_ta(soup)
+
+        # City — from detail page if not found on card
+        if not listing.city:
+            listing.city = _extract_city(soup)
+
+
+def _extract_ta(soup) -> str:
+    """Extract Tech. apžiūra iki date from a detail page soup.
+    autoplius structure: div.parameter-row > div.parameter-label + div.parameter-value
+    """
+    for row in soup.select("div.parameter-row"):
+        label = row.select_one("div.parameter-label")
+        value = row.select_one("div.parameter-value")
+        if label and value:
+            ltext = label.get_text(strip=True).lower()
+            if "apžiūra" in ltext or "apziura" in ltext or ("tech" in ltext and "iki" in ltext):
+                val = value.get_text(strip=True)
+                if val:
+                    return val
+
+    # Fallback: regex on full page text
+    m = re.search(
+        r"tech\.?\s*apž[iū]ra\s*iki\s*(20\d{2}[-\.]\d{1,2}|n[eė]ra)",
+        soup.get_text(), re.I,
+    )
+    if m:
+        raw = m.group(1).strip()
+        return "Nėra" if re.match(r"n[eė]ra", raw, re.I) else raw
+
+    return ""
+
+
+def _extract_city(soup) -> str:
+    """Extract city from autoplius detail page location elements.
+    Format is always 'City, Lietuva' — take the part before the comma.
+    """
+    for sel in [
+        "span.seller-contact-location",
+        "div.owner-location",
+        "div.sticky-announcement-location",
+    ]:
+        el = soup.select_one(sel)
+        if el:
+            city = el.get_text(strip=True).split(",")[0].strip()
+            if city:
+                return city
+    return ""
+
+
+def _match_city(text: str) -> str:
+    """Return the Lithuanian city name found at the start of text, or ''."""
+    low = text.lower().strip()
+    # Try exact match first, then prefix match for "Vilnius, Vilniaus r." style
+    if low in LITHUANIAN_CITIES:
+        return text.strip()
+    for city in sorted(LITHUANIAN_CITIES, key=len, reverse=True):
+        if low.startswith(city):
+            # Return just the city portion (before comma or district suffix)
+            return text.split(",")[0].strip()
+    return ""
 
 
 def _detect_damage(text_lower: str) -> tuple[bool, str]:

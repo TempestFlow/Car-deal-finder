@@ -12,10 +12,10 @@ FILTERS = {
 }
 
 SCRAPER_SETTINGS = {
-    "max_pages": 10,
+    "max_pages": 5,
     "request_delay": 1.5,
     "timeout": 10,
-    "enrich_details": False,  # Set True to fetch detail pages for seller type & date (much slower)
+    "enrich_details": True,   # Fetches detail pages for seller type, city fallback & Techninė apžiūra
 }
 
 OUTPUT_FILE = "output/results.html"

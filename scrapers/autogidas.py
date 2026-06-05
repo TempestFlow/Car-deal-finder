@@ -43,6 +43,9 @@ class AutogidasScraper(BaseScraper):
         seen_urls: set = set()
         makes = self.filters.get("makes") or [""]  # empty string = no make filter
 
+        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
+        search_cache = self.settings.get("use_html_cache", True)
+
         for make in makes:
             # autogidas filters by make via URL path: /skelbimai/automobiliai/toyota/
             make_path = f"{SEARCH_PATH}{make.lower()}/" if make else SEARCH_PATH
@@ -57,7 +60,7 @@ class AutogidasScraper(BaseScraper):
                 url = f"{BASE_URL}{make_path}{qs}"
                 logger.info("autogidas page %d: %s", page, url)
 
-                soup = self._get_page(url)
+                soup = self._get_page(url, use_cache=search_cache)
                 if soup is None:
                     break
 

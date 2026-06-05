@@ -1,3 +1,4 @@
+import re
 from datetime import date
 from statistics import median
 
@@ -116,6 +117,42 @@ def _seller_score(listing: CarListing) -> float:
     return 100.0 if listing.seller_type == "private" else 40.0
 
 
+def _parse_ta_months_left(ta_str: str) -> int:
+    """Parse TA string → months remaining.
+    Returns -1 (unknown), 0 (no TA / Nėra), negative (expired), or positive months left.
+    """
+    if not ta_str:
+        return -1
+    if re.match(r"n[eė]ra", ta_str, re.I) or ta_str.strip() in ("-", "–"):
+        return 0
+
+    m = re.search(r"(20\d{2})[-\./ ](\d{1,2})", ta_str)
+    if not m:
+        return -1
+
+    ta_year, ta_month = int(m.group(1)), int(m.group(2))
+    today = date.today()
+    months_left = (ta_year - today.year) * 12 + (ta_month - today.month)
+    # Expired = negative; still valid = positive
+    return months_left if months_left >= 0 else months_left  # keep negative for expired
+
+
+def _ta_bonus(listing: CarListing) -> float:
+    """Small bonus/penalty based on Techninė apžiūra validity."""
+    ml = listing.ta_months_left
+    if ml == -1:
+        return 0.0   # unknown — neutral
+    if ml <= 0:
+        return -10.0 if ml == 0 else -7.0  # no TA or expired
+    if ml <= 3:
+        return 0.0   # expiring very soon — neutral
+    if ml <= 6:
+        return 3.0   # a few months left — mild plus
+    if ml <= 12:
+        return 5.0   # comfortable
+    return 8.0       # more than a year left — great
+
+
 def score_listings(listings: list) -> list:
     for listing in listings:
         ps = _price_score(listing, listings)
@@ -127,12 +164,18 @@ def score_listings(listings: list) -> list:
         listing.mileage_sub_score = round(ms, 1)
         listing.freshness_sub_score = round(fs, 1)
         listing.seller_sub_score = round(ss, 1)
+
         rb = _reliability_bonus(listing)
         listing.reliability_bonus = rb
+
+        # TA: compute months left then bonus
+        listing.ta_months_left = _parse_ta_months_left(listing.technical_inspection)
+        tb = _ta_bonus(listing)
+        listing.ta_bonus = round(tb, 1)
 
         score = round(ps * 0.40 + ms * 0.30 + fs * 0.15 + ss * 0.15, 2)
         if listing.damage:
             score = max(0.0, score - 30.0)
-        listing.deal_score = min(100.0, score + rb)
+        listing.deal_score = min(100.0, score + rb + tb)
 
     return listings

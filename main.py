@@ -54,9 +54,13 @@ def main():
         logger.info("Loaded %d listings from cache", len(all_listings))
     else:
         os.makedirs("output", exist_ok=True)
+        scraper_settings = dict(SCRAPER_SETTINGS)
+        if "--fresh" in sys.argv:
+            scraper_settings["use_html_cache"] = False
+            logger.info("--fresh: HTML page cache bypassed, fetching live pages")
         scrapers = [
-            AutopliusScraper(FILTERS, SCRAPER_SETTINGS),
-            AutogidasScraper(FILTERS, SCRAPER_SETTINGS),
+            AutopliusScraper(FILTERS, scraper_settings),
+            AutogidasScraper(FILTERS, scraper_settings),
         ]
 
         all_listings: list[CarListing] = []
