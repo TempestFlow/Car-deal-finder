@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://autoplius.lt"
 SEARCH_PATH = "/skelbimai/naudoti-automobiliai"
-PAGE_SIZE = 20  # Listing cards per search page
 
 # Numeric IDs from autoplius.lt make dropdown (select[name='make_id_list'])
 AUTOPLIUS_MAKE_IDS: dict[str, int] = {
@@ -94,73 +93,39 @@ def _normalize_fuel(text: str) -> str:
 class AutopliusScraper(BaseScraper):
     # autoplius sits behind a Cloudflare JS check: plain requests get 403
     needs_browser = True
+    item_selector = "a.announcement-item"
+    page_size = 20
 
     @property
     def source_name(self) -> str:
         return "autoplius"
 
-    def scrape(self) -> list:
-        listings = []
-        seen_urls: set = set()
+    def _search_url(self, target: tuple[str, str], params: dict, page: int) -> str:
+        params = dict(params, page_nr=page) if page > 1 else params
+        return f"{BASE_URL}{SEARCH_PATH}?{urlencode(params)}"
 
-        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
-        search_cache = self.settings.get("use_html_cache", True)
+    def _model_params(self, target: tuple[str, str]) -> dict | None:
+        make_id = AUTOPLIUS_MAKE_IDS.get(target[0])
+        model_id = AUTOPLIUS_MODEL_IDS.get(target)
+        if not make_id or not model_id:
+            logger.warning("No autoplius make/model id for %s %s — skipping", *target)
+            return None
+        return {"category_id": 2, "make_id": make_id, "model_id": model_id}
 
-        for target in self.targets:
-            make, model = target
-            make_id = AUTOPLIUS_MAKE_IDS.get(make)
-            model_id = AUTOPLIUS_MODEL_IDS.get(target)
-            if not make_id or not model_id:
-                logger.warning("No autoplius make/model id for %s %s — skipping", make, model)
-                continue
+    def _market_params(self, target: tuple[str, str], year_from: int, year_to: int) -> dict | None:
+        p = self._model_params(target)
+        if p is None:
+            return None
+        # Default order ("Aktualiausi") is roughly cheapest-first, which would bias the sample low;
+        # "Atnaujinti viršuje" (recently updated) is price-neutral
+        return dict(p, make_date_from=year_from, make_date_to=year_to, fk_place_countries_id=1,
+                    order_by=2, order_direction="DESC")
 
-            base_params = self._build_params(make_id, model_id)
-            logger.info("autoplius: scraping %s %s (make_id=%s, model_id=%s)", make, model, make_id, model_id)
-            for page in range(1, self.settings["max_pages"] + 1):
-                params = dict(base_params)
-                if page > 1:
-                    params["page_nr"] = page
-                url = f"{BASE_URL}{SEARCH_PATH}?{urlencode(params)}"
-                logger.info("autoplius page %d: %s", page, url)
-
-                soup = self._get_page(url, use_cache=search_cache)
-                if soup is None:
-                    break
-
-                items = soup.select("a.announcement-item")
-                new_on_page = 0
-                for item in items:
-                    try:
-                        listing = self._parse_item(item)
-                    except Exception as e:
-                        logger.error("Parse error: %s", e)
-                        continue
-                    if not listing or listing.url in seen_urls:
-                        continue
-                    seen_urls.add(listing.url)
-                    new_on_page += 1
-                    if self._apply_filters(listing, target):
-                        listings.append(listing)
-
-                logger.info("autoplius page %d: %d new cards, %d listings so far", page, new_on_page, len(listings))
-                # A short page is the last one — skip the request for an empty next page
-                if not new_on_page or len(items) < PAGE_SIZE:
-                    break
-
-        if self.settings.get("enrich_details", True):
-            for listing in listings:
-                try:
-                    self._enrich_detail(listing)
-                except Exception as e:
-                    logger.debug("Detail enrich failed for %s: %s", listing.url, e)
-
-        listings = self._final_filter(listings)
-        logger.info("autoplius total: %d listings", len(listings))
-        return listings
-
-    def _build_params(self, make_id: int, model_id: int) -> dict:
+    def _build_params(self, target: tuple[str, str]) -> dict | None:
         # autoplius search form field names; note price is sell_price_*, year is make_date_*
-        p: dict = {"category_id": 2, "make_id": make_id, "model_id": model_id}
+        p = self._model_params(target)
+        if p is None:
+            return None
         if self.filters.get("year_min"):
             p["make_date_from"] = self.filters["year_min"]
         if self.filters.get("year_max"):

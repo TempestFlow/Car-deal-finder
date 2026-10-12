@@ -25,6 +25,8 @@ HEADERS = {
 BROWSER_PROFILE_DIR = os.path.join("cache", "browser_profile")
 CHALLENGE_MARKERS = ("Tikriname jūsų naršyklę", "Just a moment", "challenge-platform")
 CHALLENGE_TIMEOUT = 60  # seconds to wait for a Cloudflare check to clear
+MARKET_CACHE_HOURS = 72  # market-sample search pages change slowly; reuse them even with --fresh
+MARKET_MIN_PRICE = 300   # below this a card is a placeholder price or parts car, not a market price
 
 
 def parse_ta(value: str) -> tuple[int, int] | None:
@@ -44,6 +46,8 @@ def _is_challenge(html: str) -> bool:
 class BaseScraper(ABC):
     # Sites behind a Cloudflare JS challenge set this; pages are then fetched with a real browser
     needs_browser = False
+    item_selector = ""   # CSS selector of one listing card on a search page
+    page_size = 0        # cards per full search page; 0 = unknown (no short-page stop)
 
     def __init__(self, filters: dict, settings: dict, targets: list[tuple[str, str]]):
         self.filters = filters
@@ -62,8 +66,41 @@ class BaseScraper(ABC):
     def source_name(self) -> str:
         pass
 
-    @abstractmethod
     def scrape(self) -> list:
+        """Candidates: site search with all filters in the URL, then detail pages for TA."""
+        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
+        search_cache = self.settings.get("use_html_cache", True)
+        listings, seen = [], set()
+
+        for target in self.targets:
+            params = self._build_params(target)
+            if params is None:
+                continue
+            logger.info("%s: scraping %s %s", self.source_name, *target)
+            found = self._search(target, params, lambda l, t=target: self._apply_filters(l, t),
+                                 self.settings["max_pages"], use_cache=search_cache)
+            for listing in found:
+                if listing.url not in seen:
+                    seen.add(listing.url)
+                    listings.append(listing)
+
+        if self.settings.get("enrich_details", True):
+            for listing in listings:
+                try:
+                    self._enrich_detail(listing)
+                except Exception as e:
+                    logger.debug("Detail enrich failed for %s: %s", listing.url, e)
+
+        listings = self._final_filter(listings)
+        logger.info("%s total: %d listings", self.source_name, len(listings))
+        return listings
+
+    @abstractmethod
+    def _build_params(self, target: tuple[str, str]) -> dict | None:
+        """Search params for candidates; None = this site can't search the target."""
+
+    @abstractmethod
+    def _enrich_detail(self, listing: CarListing):
         pass
 
     def close(self):
@@ -73,11 +110,75 @@ class BaseScraper(ABC):
             self._pw.stop()
         self._pw = self._browser = self._page = None
 
-    def _get_page(self, url: str, use_cache: bool = True) -> BeautifulSoup | None:
+    def scrape_market(self, windows: dict) -> list:
+        """Comparable listings for market prices: same model and year window, all of Lithuania,
+        no price/city/TA filter. Search cards only (no detail pages), cached for MARKET_CACHE_HOURS."""
+        samples = []
+        for target, (y0, y1) in windows.items():
+            def keep(l, target=target, y0=y0, y1=y1):
+                return (self._matches_target(l, target) and l.price >= MARKET_MIN_PRICE
+                        and not l.damage and y0 <= l.year <= y1)
+
+            logger.info("%s: market sample %s %s %d–%d", self.source_name, *target, y0, y1)
+            params = self._market_params(target, y0, y1)
+            if params is None:
+                continue
+            samples += self._search(target, params, keep, self.settings.get("market_pages", 3),
+                                    max_age_hours=MARKET_CACHE_HOURS)
+        logger.info("%s: %d market samples", self.source_name, len(samples))
+        return samples
+
+    @abstractmethod
+    def _market_params(self, target: tuple[str, str], year_from: int, year_to: int) -> dict | None:
+        pass
+
+    @abstractmethod
+    def _search_url(self, target: tuple[str, str], params: dict, page: int) -> str:
+        pass
+
+    @abstractmethod
+    def _parse_item(self, item) -> CarListing | None:
+        pass
+
+    def _search(self, target, params: dict, keep, max_pages: int,
+                use_cache: bool = True, max_age_hours: float | None = None) -> list:
+        """Walk search result pages, returning parsed cards for which keep(listing) is True.
+        Stops at the first page with no kept cards (end of results / site padding) or a short page."""
+        found, seen = [], set()
+        for page in range(1, max_pages + 1):
+            url = self._search_url(target, params, page)
+            logger.info("%s page %d: %s", self.source_name, page, url)
+            soup = self._get_page(url, use_cache=use_cache, max_age_hours=max_age_hours)
+            if soup is None:
+                break
+
+            items = soup.select(self.item_selector)
+            kept = 0
+            for item in items:
+                try:
+                    listing = self._parse_item(item)
+                except Exception as e:
+                    logger.error("Parse error: %s", e)
+                    continue
+                if not listing or listing.url in seen:
+                    continue
+                seen.add(listing.url)
+                if keep(listing):
+                    found.append(listing)
+                    kept += 1
+
+            logger.info("%s page %d: %d matching cards", self.source_name, page, kept)
+            if not kept or (self.page_size and len(items) < self.page_size):
+                break
+        return found
+
+    def _get_page(self, url: str, use_cache: bool = True, max_age_hours: float | None = None) -> BeautifulSoup | None:
         cache_key = hashlib.md5(url.encode()).hexdigest()
         cache_path = os.path.join(self._cache_dir, f"{cache_key}.html")
 
-        if use_cache and os.path.exists(cache_path):
+        if use_cache and os.path.exists(cache_path) and (
+            max_age_hours is None or time.time() - os.path.getmtime(cache_path) < max_age_hours * 3600
+        ):
             logger.debug("Cache hit: %s", url)
             with open(cache_path, "r", encoding="utf-8") as f:
                 return BeautifulSoup(f.read(), "lxml")

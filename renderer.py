@@ -399,9 +399,12 @@ header::after {
 .card-body { padding: 15px 17px 17px; flex: 1; display: flex; flex-direction: column; }
 .card-make { font-size: 0.68rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 3px; }
 .card-title { font-size: 0.97rem; font-weight: 700; color: var(--text); line-height: 1.35; margin-bottom: 10px; }
-.card-price-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 11px; }
+.card-price-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin-bottom: 11px; }
 .card-price { font-size: 1.55rem; font-weight: 800; color: var(--navy); letter-spacing: -0.025em; }
 .price-na { font-size: 1.1rem; color: var(--muted); }
+.market { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+.market .below { color: var(--green-text); }
+.market .above { color: var(--red-text); }
 
 /* Spec chips */
 .specs { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 12px; }
@@ -515,7 +518,7 @@ header::after {
         <tr>
           <td><span style="color:#4ade80">&#9632;</span> Price</td>
           <td>40%</td>
-          <td>How far below median market price for same make/model/year. 50% below = 100 pts.</td>
+          <td>How far below the market price: median asking price of the same model &plusmn;1 year (widened to &plusmn;2 if needed, same fuel when possible) across all of Lithuania, at least 5 comparables. 50% below = 100 pts, at or above market = 0.</td>
         </tr>
         <tr>
           <td><span style="color:#60a5fa">&#9632;</span> Mileage</td>
@@ -724,6 +727,7 @@ header::after {
     <div class="sort-pills">
       <button class="sort-btn active" onclick="sortBy('score',this)">Score</button>
       <button class="sort-btn" onclick="sortBy('price',this)">Price</button>
+      <button class="sort-btn" onclick="sortBy('marketDiff',this)">vs Market</button>
       <button class="sort-btn" onclick="sortBy('mileage',this)">Mileage</button>
       <button class="sort-btn" onclick="sortBy('year',this)">Year</button>
     </div>
@@ -737,6 +741,7 @@ header::after {
     data-seller="{{ car.seller_type }}"
     data-fuel="{{ car.fuel_type }}"
     data-price="{{ car.price }}"
+    data-market-diff="{{ car.market_diff_pct if car.market_price else 999 }}"
     data-mileage="{{ car.mileage }}"
     data-year="{{ car.year }}"
     data-score="{{ car.deal_score }}"
@@ -783,6 +788,12 @@ header::after {
         {% else %}
         <span class="price-na">Price N/A</span>
         {% endif %}
+        {% if car.market_price and car.price %}
+        <span class="market" title="Median of {{ car.market_samples }} similar listings (same model, similar year, all Lithuania)">
+          market ~&euro;{{ '{:,.0f}'.format(car.market_price) }} &middot;
+          <span class="{{ 'below' if car.market_diff_pct < 0 else 'above' }}">{{ '{:+.0f}'.format(car.market_diff_pct) }}%</span>
+        </span>
+        {% endif %}
       </div>
 
       <div class="specs">
@@ -805,7 +816,7 @@ header::after {
 
       <div class="metrics">
         <div class="metric-row">
-          <span class="ml" title="Price vs. market median for similar cars">Price 40%</span>
+          <span class="ml" title="Price vs. market median of similar cars across Lithuania">Price 40%</span>
           <div class="mw"><div class="mb mb-price" style="width:{{ car.price_sub_score }}%"></div></div>
           <span class="mv">{{ car.price_sub_score | int }}</span>
         </div>
@@ -845,7 +856,7 @@ var sortDir = -1;
 
 function sortBy(field, btn) {
   if (currentSort === field) { sortDir *= -1; }
-  else { currentSort = field; sortDir = (field === 'price' || field === 'mileage') ? 1 : -1; }
+  else { currentSort = field; sortDir = (field === 'price' || field === 'mileage' || field === 'marketDiff') ? 1 : -1; }
   document.querySelectorAll('.sort-btn').forEach(function(b) { b.classList.remove('active'); });
   btn.classList.add('active');
   applyFilters();

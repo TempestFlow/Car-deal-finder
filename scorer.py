@@ -2,9 +2,11 @@ import re
 from datetime import date
 from statistics import median
 
+from market import base_model
 from models import CarListing
 
 NEUTRAL_SCORE = 50.0
+MIN_FALLBACK_SAMPLES = 3
 EXPECTED_KM_PER_YEAR = 15000
 
 # Known-reliable models with score bonuses. Keys are lowercase substrings matched
@@ -66,27 +68,26 @@ def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, value))
 
 
-def _price_score(listing: CarListing, all_listings: list) -> float:
-    make = listing.make.lower()
-    model = listing.model.lower()
-    year = listing.year
+def _price_score(listing: CarListing, all_listings: list) -> float | None:
+    """50% below the reference price = 100 pts, at or above it = 0. None = no reference price."""
+    if not listing.price:
+        return None
 
-    # Tiered grouping: try exact year → any year → make only
-    def group_prices(key_fn):
-        return [l.price for l in all_listings if l.price > 0 and l.id != listing.id and key_fn(l)]
+    # Preferred: market price from the wider comparable sample (market.py)
+    if listing.market_price:
+        return _clamp((listing.market_price - listing.price) / listing.market_price * 200, 0, 100)
 
-    for key_fn in [
-        lambda l: l.make.lower() == make and l.model.lower() == model and l.year == year,
-        lambda l: l.make.lower() == make and l.model.lower() == model and abs(l.year - year) <= 2,
-        lambda l: l.make.lower() == make,
-    ]:
-        prices = group_prices(key_fn)
-        if len(prices) >= 1:
-            med = median(prices)
-            if med > 0:
-                return _clamp((med - listing.price) / med * 200, 0, 100)
-
-    return NEUTRAL_SCORE
+    # Fallback: compare within the scraped listings (same base model, ±2 years)
+    make, model = listing.make.lower(), base_model(listing)
+    prices = [
+        l.price for l in all_listings
+        if l.price > 0 and l.id != listing.id and l.make.lower() == make
+        and base_model(l) == model and abs(l.year - listing.year) <= 2
+    ]
+    if len(prices) < MIN_FALLBACK_SAMPLES:
+        return None
+    med = median(prices)
+    return _clamp((med - listing.price) / med * 200, 0, 100)
 
 
 def _mileage_score(listing: CarListing) -> float:
@@ -154,8 +155,16 @@ def _ta_bonus(listing: CarListing) -> float:
 
 
 def score_listings(listings: list) -> list:
+    price_scores = {l.id: _price_score(l, listings) for l in listings}
+    # No reference price → treat as a typical listing (median of known scores), not as a bargain.
+    # A fixed 50 would equal "25% below market", far better than most listings score.
+    known = [s for s in price_scores.values() if s is not None]
+    typical = median(known) if known else NEUTRAL_SCORE
+
     for listing in listings:
-        ps = _price_score(listing, listings)
+        ps = price_scores[listing.id]
+        if ps is None:
+            ps = typical
         ms = _mileage_score(listing)
         fs = _freshness_score(listing)
         ss = _seller_score(listing)

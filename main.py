@@ -8,6 +8,7 @@ from scrapers.autoplius import AutopliusScraper
 from scrapers.autogidas import AutogidasScraper
 from scorer import score_listings
 from insights import compute_insights
+from market import apply_market, year_windows
 from renderer import render_html, render_insights_html
 from storage import DATA_FILE, is_cache_fresh, load_listings, merge_price_history, save_listings
 
@@ -67,23 +68,35 @@ def main():
 
         all_listings: list[CarListing] = []
         seen_urls: set = set()
+        market_samples: list[CarListing] = []
 
-        for scraper in scrapers:
-            logger.info("Starting scraper: %s", scraper.source_name)
-            try:
-                results = scraper.scrape()
-                for listing in results:
-                    if listing.url not in seen_urls:
-                        seen_urls.add(listing.url)
-                        all_listings.append(listing)
-            except Exception as e:
-                logger.error("Scraper %s failed: %s", scraper.source_name, e)
-            finally:
+        # Scrapers stay open until the market sample is in (autoplius keeps its browser window)
+        try:
+            for scraper in scrapers:
+                logger.info("Starting scraper: %s", scraper.source_name)
+                try:
+                    for listing in scraper.scrape():
+                        if listing.url not in seen_urls:
+                            seen_urls.add(listing.url)
+                            all_listings.append(listing)
+                except Exception as e:
+                    logger.error("Scraper %s failed: %s", scraper.source_name, e)
+
+            logger.info("Total unique listings collected: %d", len(all_listings))
+
+            windows = year_windows(all_listings, TARGETS)
+            for scraper in scrapers:
+                try:
+                    market_samples += scraper.scrape_market(windows)
+                except Exception as e:
+                    logger.error("Market sample from %s failed: %s", scraper.source_name, e)
+        finally:
+            for scraper in scrapers:
                 scraper.close()
 
-        logger.info("Total unique listings collected: %d", len(all_listings))
-
         if all_listings:
+            # Stored on each listing, so cached runs keep the market prices
+            apply_market(all_listings, market_samples)
             # Carry forward price history from previous run to detect drops
             old = load_listings(DATA_FILE)
             if old:

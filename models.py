@@ -30,3 +30,6 @@ class CarListing:
     technical_inspection: str = ""  # raw scraped value e.g. "2025-12", "Nėra"
     ta_months_left: int = -1        # -1=unknown, 0=no TA, negative=expired, positive=months left
     ta_bonus: float = 0.0
+    market_price: float = 0.0       # median asking price of comparable cars (0 = unknown)
+    market_samples: int = 0         # how many comparables the median is based on
+    market_diff_pct: float = 0.0    # (price - market) / market * 100; negative = below market

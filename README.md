@@ -27,6 +27,7 @@ car-deal-finder/
 │   ├── base.py          # BaseScraper — HTTP session, caching, filter application
 │   ├── autoplius.py     # Scraper for autoplius.lt
 │   └── autogidas.py     # Scraper for autogidas.lt
+├── market.py            # Market price: median of comparable listings
 ├── storage.py           # JSON persistence and price-history merging
 ├── output/
 │   └── results.html     # Generated output (created on first run)
@@ -171,13 +172,26 @@ Each scraper:
 - Detects damage from Lithuanian keywords in the card text (`avarinis`, `daužtas`, `avarija`, `pažeidas`, etc.)
 - When `enrich_details: True`, visits each listing's detail page to refine seller type (`private` vs `dealer`), listed date, and damage information
 
+### Market price (`market.py`)
+
+The budget filter (1500–4500 €) only decides which cars are candidates. Whether a candidate is a good deal is
+judged against the wider market: after the candidate search, each scraper also reads up to `market_pages`
+search pages per model with **no price, city or TA filter** (all of Lithuania, the candidates' years ± 2).
+Only search cards are used — no detail pages — and these pages are cached for 72 h, even with `--fresh`.
+
+For each candidate the market price is the median asking price of comparable listings: same make and base
+model (`Civic VII` counts as `Civic`), year ±1 (widened to ±2 if needed), same fuel when there are enough,
+excluding damaged cards and prices under 300 €. With fewer than 5 comparables the market price is unknown and
+the score falls back to comparing within the scraped candidates. Cards show `market ~€3,200 · −18%`, and
+the **vs Market** sort puts the biggest discounts first.
+
 ### Scoring (`scorer.py`)
 
 Each listing gets a `deal_score` from 0 to 100:
 
 | Factor | Weight | How it's calculated |
 |---|---|---|
-| **Price** | 40% | Compared to the median price of identical/similar make·model·year listings scraped in the same run. 50% below median = 100 pts. At or above median = 0 pts. |
+| **Price** | 40% | Compared to the **market price** (see below). 50% below market = 100 pts. At or above market = 0 pts. |
 | **Mileage** | 30% | Expected mileage = `(current_year − listing_year) × 15,000 km`. At expected = 50 pts. Zero mileage = 100 pts. Double expected = 0 pts. Suspiciously low mileage on old cars is capped at 90 (odometer fraud guard). |
 | **Freshness** | 15% | Starts at 100, loses 1 pt per day the listing has been live. Hits 0 after 100 days. A detected price drop adds +15 bonus points. |
 | **Seller type** | 15% | Private seller = 100 pts (no dealer markup). Dealer = 40 pts. |
@@ -213,7 +227,7 @@ A single self-contained `results.html` with no external dependencies:
 | Filter by fuel | "Fuel" dropdown — Diesel / Petrol / Electric / etc. |
 | Filter by source | "Source" dropdown — autoplius / autogidas |
 | Max price cap | Type a number in the "Max €" field |
-| Sort | Score (default) · Price · Mileage · Year buttons |
+| Sort | Score (default) · Price · vs Market · Mileage · Year buttons |
 | View listing | "View Listing →" button opens original URL in a new tab |
 
 ---

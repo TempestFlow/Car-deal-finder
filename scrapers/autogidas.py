@@ -34,67 +34,24 @@ def _normalize_fuel(text: str) -> str:
 
 
 class AutogidasScraper(BaseScraper):
+    # When filtered results run out, autogidas pads pages with unfiltered "similar" listings;
+    # BaseScraper._search stops at the first page where no card passes the filter
+    item_selector = "div.article-item"
+
     @property
     def source_name(self) -> str:
         return "autogidas"
 
-    def scrape(self) -> list:
-        listings = []
-        seen_urls: set = set()
+    def _search_url(self, target: tuple[str, str], params: dict, page: int) -> str:
+        # autogidas filters make/model via URL path: /skelbimai/automobiliai/toyota/corolla/
+        make, model = target
+        params = dict(params, page=page) if page > 1 else params
+        return f"{BASE_URL}{SEARCH_PATH}{_slug(make)}/{_slug(model)}/?{urlencode(params)}"
 
-        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
-        search_cache = self.settings.get("use_html_cache", True)
-        base_params = self._build_params()
+    def _market_params(self, target: tuple[str, str], year_from: int, year_to: int) -> dict:
+        return {"f_41": year_from, "f_42": year_to}
 
-        for target in self.targets:
-            make, model = target
-            # autogidas filters make/model via URL path: /skelbimai/automobiliai/toyota/corolla/
-            path = f"{SEARCH_PATH}{_slug(make)}/{_slug(model)}/"
-            logger.info("autogidas: scraping %s %s", make, model)
-
-            for page in range(1, self.settings["max_pages"] + 1):
-                params = dict(base_params)
-                if page > 1:
-                    params["page"] = page
-                url = f"{BASE_URL}{path}?{urlencode(params)}"
-                logger.info("autogidas page %d: %s", page, url)
-
-                soup = self._get_page(url, use_cache=search_cache)
-                if soup is None:
-                    break
-
-                items = soup.select("div.article-item")
-                kept_on_page = 0
-                for item in items:
-                    try:
-                        listing = self._parse_item(item)
-                    except Exception as e:
-                        logger.error("Parse error: %s", e)
-                        continue
-                    if not listing or listing.url in seen_urls:
-                        continue
-                    seen_urls.add(listing.url)
-                    if self._apply_filters(listing, target):
-                        listings.append(listing)
-                        kept_on_page += 1
-
-                logger.info("autogidas page %d: %d matching cards, %d listings so far", page, kept_on_page, len(listings))
-                # When filtered results run out, autogidas pads with unfiltered "similar" listings
-                if not kept_on_page:
-                    break
-
-        if self.settings.get("enrich_details", True):
-            for listing in listings:
-                try:
-                    self._enrich_detail(listing)
-                except Exception as e:
-                    logger.debug("Detail enrich failed for %s: %s", listing.url, e)
-
-        listings = self._final_filter(listings)
-        logger.info("autogidas total: %d listings", len(listings))
-        return listings
-
-    def _build_params(self) -> dict:
+    def _build_params(self, target: tuple[str, str]) -> dict:
         # autogidas search form field names (select[name=f_*] on the search page)
         p: dict = {}
         if self.filters.get("price_min"):

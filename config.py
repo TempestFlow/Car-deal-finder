@@ -17,6 +17,7 @@ FILTERS = {
 
 SCRAPER_SETTINGS = {
     "max_pages": 5,           # Per model; stops earlier when a page has no new listings
+    "market_pages": 3,        # Per model per site for the market-price sample (search cards only, cached 72 h)
     "request_delay": 1.5,
     "timeout": 10,
     "enrich_details": True,   # Required: detail pages hold the TA date, seller type & city

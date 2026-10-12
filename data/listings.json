@@ -1,5 +1,5 @@
 {
-  "saved_at": "2026-10-12T15:45:42.556028",
+  "saved_at": "2026-10-12T16:29:46.961899",
   "listings": [
     {
       "id": "autoplius_32622858",
@@ -29,7 +29,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-07",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2624,
+      "market_samples": 6,
+      "market_diff_pct": -39.1
     },
     {
       "id": "autoplius_32571146",
@@ -59,7 +62,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-05",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2800,
+      "market_samples": 6,
+      "market_diff_pct": 25.0
     },
     {
       "id": "autoplius_32235888",
@@ -91,7 +97,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1099,
+      "market_samples": 7,
+      "market_diff_pct": 154.8
     },
     {
       "id": "autoplius_31800055",
@@ -123,7 +132,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1898,
+      "market_samples": 14,
+      "market_diff_pct": -13.0
     },
     {
       "id": "autoplius_31868291",
@@ -155,7 +167,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1099,
+      "market_samples": 7,
+      "market_diff_pct": 54.7
     },
     {
       "id": "autoplius_32089000",
@@ -187,7 +202,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-05",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2700,
+      "market_samples": 5,
+      "market_diff_pct": 7.4
     },
     {
       "id": "autoplius_30023041",
@@ -219,7 +237,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1724,
+      "market_samples": 14,
+      "market_diff_pct": 74.0
     },
     {
       "id": "autoplius_32605732",
@@ -249,7 +270,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-01",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3649,
+      "market_samples": 10,
+      "market_diff_pct": 9.6
     },
     {
       "id": "autoplius_32138412",
@@ -281,7 +305,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1650,
+      "market_samples": 19,
+      "market_diff_pct": 9.1
     },
     {
       "id": "autoplius_32537408",
@@ -313,7 +340,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1800,
+      "market_samples": 15,
+      "market_diff_pct": 30.6
     },
     {
       "id": "autoplius_32506096",
@@ -343,7 +373,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1999,
+      "market_samples": 23,
+      "market_diff_pct": 22.6
     },
     {
       "id": "autoplius_32414076",
@@ -373,7 +406,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3250,
+      "market_samples": 13,
+      "market_diff_pct": -3.1
     },
     {
       "id": "autoplius_32158664",
@@ -405,7 +441,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1900,
+      "market_samples": 31,
+      "market_diff_pct": 81.6
     },
     {
       "id": "autoplius_31511384",
@@ -435,7 +474,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4475,
+      "market_samples": 16,
+      "market_diff_pct": 0.6
     },
     {
       "id": "autoplius_32310956",
@@ -467,7 +509,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3649,
+      "market_samples": 8,
+      "market_diff_pct": 1.4
     },
     {
       "id": "autoplius_31558034",
@@ -499,7 +544,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1500,
+      "market_samples": 28,
+      "market_diff_pct": 0.0
     },
     {
       "id": "autoplius_30661079",
@@ -531,7 +579,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-01",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2750,
+      "market_samples": 8,
+      "market_diff_pct": -18.2
     },
     {
       "id": "autoplius_31492012",
@@ -563,7 +614,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-03",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1900,
+      "market_samples": 16,
+      "market_diff_pct": 57.9
     },
     {
       "id": "autoplius_31918917",
@@ -595,7 +649,44 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4400,
+      "market_samples": 11,
+      "market_diff_pct": 0.0
+    },
+    {
+      "id": "autoplius_32625186",
+      "source": "autoplius",
+      "url": "https://autoplius.lt/skelbimai/skoda-octavia-1-6-l-hecbekas-2010-dyzelinas-32625186.html",
+      "title": "Skoda Octavia",
+      "make": "Skoda",
+      "model": "Octavia",
+      "year": 2010,
+      "price": 2200.0,
+      "mileage": 257900,
+      "fuel_type": "Diesel",
+      "seller_type": "dealer",
+      "listed_date": "2026-10-12",
+      "price_history": [
+        2500.0,
+        2200.0
+      ],
+      "images": [],
+      "deal_score": 0.0,
+      "price_sub_score": 0.0,
+      "mileage_sub_score": 0.0,
+      "freshness_sub_score": 0.0,
+      "seller_sub_score": 0.0,
+      "damage": false,
+      "damage_info": "",
+      "reliability_bonus": 0.0,
+      "city": "Vilnius",
+      "technical_inspection": "2028-08",
+      "ta_months_left": -1,
+      "ta_bonus": 0.0,
+      "market_price": 2445,
+      "market_samples": 10,
+      "market_diff_pct": -10.0
     },
     {
       "id": "autoplius_32618028",
@@ -625,7 +716,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-06",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 5339,
+      "market_samples": 26,
+      "market_diff_pct": -25.1
     },
     {
       "id": "autoplius_32585282",
@@ -655,7 +749,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2490,
+      "market_samples": 13,
+      "market_diff_pct": 12.4
     },
     {
       "id": "autoplius_31564327",
@@ -685,7 +782,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-01",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2400,
+      "market_samples": 11,
+      "market_diff_pct": 25.0
     },
     {
       "id": "autoplius_32626214",
@@ -715,37 +815,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
-    },
-    {
-      "id": "autoplius_32625186",
-      "source": "autoplius",
-      "url": "https://autoplius.lt/skelbimai/skoda-octavia-1-6-l-hecbekas-2010-dyzelinas-32625186.html",
-      "title": "Skoda Octavia",
-      "make": "Skoda",
-      "model": "Octavia",
-      "year": 2010,
-      "price": 2500.0,
-      "mileage": 257900,
-      "fuel_type": "Diesel",
-      "seller_type": "dealer",
-      "listed_date": "2026-10-12",
-      "price_history": [
-        2500.0
-      ],
-      "images": [],
-      "deal_score": 0.0,
-      "price_sub_score": 0.0,
-      "mileage_sub_score": 0.0,
-      "freshness_sub_score": 0.0,
-      "seller_sub_score": 0.0,
-      "damage": false,
-      "damage_info": "",
-      "reliability_bonus": 0.0,
-      "city": "Vilnius",
-      "technical_inspection": "2028-08",
-      "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2490,
+      "market_samples": 13,
+      "market_diff_pct": -19.7
     },
     {
       "id": "autoplius_32628090",
@@ -775,7 +848,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-07",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 5198,
+      "market_samples": 27,
+      "market_diff_pct": -27.9
     },
     {
       "id": "autoplius_32593288",
@@ -805,7 +881,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4850,
+      "market_samples": 22,
+      "market_diff_pct": -17.5
     },
     {
       "id": "autoplius_32395656",
@@ -837,7 +916,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2400,
+      "market_samples": 11,
+      "market_diff_pct": -4.2
     },
     {
       "id": "autoplius_32494096",
@@ -869,7 +951,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3950,
+      "market_samples": 11,
+      "market_diff_pct": -9.1
     },
     {
       "id": "autoplius_32088268",
@@ -901,7 +986,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2100,
+      "market_samples": 19,
+      "market_diff_pct": 38.1
     },
     {
       "id": "autoplius_31777973",
@@ -933,7 +1021,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 5198,
+      "market_samples": 27,
+      "market_diff_pct": -23.2
     },
     {
       "id": "autoplius_31896203",
@@ -965,7 +1056,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 5198,
+      "market_samples": 27,
+      "market_diff_pct": -23.1
     },
     {
       "id": "autoplius_31928261",
@@ -997,7 +1091,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2100,
+      "market_samples": 19,
+      "market_diff_pct": 114.3
     },
     {
       "id": "autoplius_31429406",
@@ -1027,7 +1124,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-07",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 31,
+      "market_diff_pct": -7.8
     },
     {
       "id": "autoplius_32566794",
@@ -1057,7 +1157,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-06",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3850,
+      "market_samples": 40,
+      "market_diff_pct": -16.9
     },
     {
       "id": "autoplius_32595518",
@@ -1087,7 +1190,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-05",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 32,
+      "market_diff_pct": 9.4
     },
     {
       "id": "autoplius_32552264",
@@ -1119,7 +1225,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-08",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 41,
+      "market_diff_pct": 21.9
     },
     {
       "id": "autoplius_32391850",
@@ -1149,7 +1258,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 32,
+      "market_diff_pct": 12.5
     },
     {
       "id": "autoplius_31276676",
@@ -1181,7 +1293,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3800,
+      "market_samples": 41,
+      "market_diff_pct": -15.8
     },
     {
       "id": "autoplius_32510208",
@@ -1213,7 +1328,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 31,
+      "market_diff_pct": 1.6
     },
     {
       "id": "autoplius_32292266",
@@ -1245,7 +1363,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3225,
+      "market_samples": 18,
+      "market_diff_pct": 5.4
     },
     {
       "id": "autoplius_31855883",
@@ -1277,7 +1398,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-05",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3800,
+      "market_samples": 41,
+      "market_diff_pct": -7.9
     },
     {
       "id": "autoplius_31861165",
@@ -1309,7 +1433,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-03",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 32,
+      "market_diff_pct": 12.5
     },
     {
       "id": "autoplius_32584338",
@@ -1339,7 +1466,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4950,
+      "market_samples": 55,
+      "market_diff_pct": -13.1
     },
     {
       "id": "autogidas_0140049642",
@@ -1371,7 +1501,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-05",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1175,
+      "market_samples": 34,
+      "market_diff_pct": 61.7
     },
     {
       "id": "autogidas_0139638275",
@@ -1403,7 +1536,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-07",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4100,
+      "market_samples": 6,
+      "market_diff_pct": -14.6
     },
     {
       "id": "autogidas_0138594170",
@@ -1435,7 +1571,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-02",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1675,
+      "market_samples": 20,
+      "market_diff_pct": -10.4
     },
     {
       "id": "autogidas_0139920318",
@@ -1467,7 +1606,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1750,
+      "market_samples": 35,
+      "market_diff_pct": 25.7
     },
     {
       "id": "autogidas_0139872438",
@@ -1499,7 +1641,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 0,
+      "market_samples": 2,
+      "market_diff_pct": 0.0
     },
     {
       "id": "autogidas_0140030718",
@@ -1531,7 +1676,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1550,
+      "market_samples": 20,
+      "market_diff_pct": 22.6
     },
     {
       "id": "autogidas_0139832802",
@@ -1563,7 +1711,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-01-00",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3649,
+      "market_samples": 10,
+      "market_diff_pct": 9.6
     },
     {
       "id": "autogidas_0139838133",
@@ -1595,7 +1746,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 4450,
+      "market_samples": 10,
+      "market_diff_pct": -1.1
     },
     {
       "id": "autogidas_0139439210",
@@ -1627,7 +1781,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 700,
+      "market_samples": 5,
+      "market_diff_pct": 140.0
     },
     {
       "id": "autogidas_0140035572",
@@ -1659,7 +1816,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-04",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 2490,
+      "market_samples": 13,
+      "market_diff_pct": 14.5
     },
     {
       "id": "autogidas_0140049225",
@@ -1691,7 +1851,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-01",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 7550,
+      "market_samples": 6,
+      "market_diff_pct": -40.4
     },
     {
       "id": "autogidas_0139998495",
@@ -1723,7 +1886,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-03",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1650,
+      "market_samples": 17,
+      "market_diff_pct": -3.0
     },
     {
       "id": "autogidas_0139914528",
@@ -1755,7 +1921,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 1650,
+      "market_samples": 17,
+      "market_diff_pct": 60.6
     },
     {
       "id": "autogidas_0139995294",
@@ -1787,7 +1956,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-10",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3200,
+      "market_samples": 31,
+      "market_diff_pct": 1.6
     },
     {
       "id": "autogidas_0140033625",
@@ -1819,7 +1991,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-06",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3850,
+      "market_samples": 40,
+      "market_diff_pct": -16.9
     },
     {
       "id": "autogidas_0139547888",
@@ -1851,7 +2026,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3850,
+      "market_samples": 40,
+      "market_diff_pct": -22.1
     },
     {
       "id": "autogidas_0139757270",
@@ -1883,7 +2061,10 @@
       "city": "Vilnius",
       "technical_inspection": "2028-09",
       "ta_months_left": -1,
-      "ta_bonus": 0.0
+      "ta_bonus": 0.0,
+      "market_price": 3225,
+      "market_samples": 40,
+      "market_diff_pct": -7.0
     }
   ]
 }
