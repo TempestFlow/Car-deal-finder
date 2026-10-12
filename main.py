@@ -2,12 +2,13 @@ import logging
 import os
 import sys
 
-from config import FILTERS, OUTPUT_FILE, INSIGHTS_FILE, SCRAPER_SETTINGS, TOP_N_RESULTS
+from config import FILTERS, OUTPUT_FILE, INSIGHTS_FILE, SCRAPER_SETTINGS, TARGETS, TOP_N_RESULTS
 from models import CarListing
 from scrapers.autoplius import AutopliusScraper
 from scrapers.autogidas import AutogidasScraper
 from scorer import score_listings
 from insights import compute_insights
+from market import apply_market, year_windows
 from renderer import render_html, render_insights_html
 from storage import DATA_FILE, is_cache_fresh, load_listings, merge_price_history, save_listings
 
@@ -19,10 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 def _select_diverse(listings: list, top_n: int, per_make: int = 5) -> list:
-    """Return up to top_n listings ensuring every make gets at least per_make slots."""
+    """Return up to top_n listings ensuring every make+model gets at least per_make slots."""
     by_make: dict[str, list] = {}
     for l in listings:
-        by_make.setdefault(l.make.lower(), []).append(l)
+        model = l.model.split()[0] if l.model else ""
+        by_make.setdefault(f"{l.make} {model}".lower(), []).append(l)
 
     selected_ids: set = set()
     result = []
@@ -60,27 +62,41 @@ def main():
             scraper_settings["use_html_cache"] = False
             logger.info("--fresh: HTML page cache bypassed, fetching live pages")
         scrapers = [
-            AutopliusScraper(FILTERS, scraper_settings),
-            AutogidasScraper(FILTERS, scraper_settings),
+            AutopliusScraper(FILTERS, scraper_settings, TARGETS),
+            AutogidasScraper(FILTERS, scraper_settings, TARGETS),
         ]
 
         all_listings: list[CarListing] = []
         seen_urls: set = set()
+        market_samples: list[CarListing] = []
 
-        for scraper in scrapers:
-            logger.info("Starting scraper: %s", scraper.source_name)
-            try:
-                results = scraper.scrape()
-                for listing in results:
-                    if listing.url not in seen_urls:
-                        seen_urls.add(listing.url)
-                        all_listings.append(listing)
-            except Exception as e:
-                logger.error("Scraper %s failed: %s", scraper.source_name, e)
+        # Scrapers stay open until the market sample is in (autoplius keeps its browser window)
+        try:
+            for scraper in scrapers:
+                logger.info("Starting scraper: %s", scraper.source_name)
+                try:
+                    for listing in scraper.scrape():
+                        if listing.url not in seen_urls:
+                            seen_urls.add(listing.url)
+                            all_listings.append(listing)
+                except Exception as e:
+                    logger.error("Scraper %s failed: %s", scraper.source_name, e)
 
-        logger.info("Total unique listings collected: %d", len(all_listings))
+            logger.info("Total unique listings collected: %d", len(all_listings))
+
+            windows = year_windows(all_listings, TARGETS)
+            for scraper in scrapers:
+                try:
+                    market_samples += scraper.scrape_market(windows)
+                except Exception as e:
+                    logger.error("Market sample from %s failed: %s", scraper.source_name, e)
+        finally:
+            for scraper in scrapers:
+                scraper.close()
 
         if all_listings:
+            # Stored on each listing, so cached runs keep the market prices
+            apply_market(all_listings, market_samples)
             # Carry forward price history from previous run to detect drops
             old = load_listings(DATA_FILE)
             if old:

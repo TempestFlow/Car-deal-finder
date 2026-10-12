@@ -34,8 +34,8 @@ def test_private_vs_dealer():
 
 
 def test_below_market_price_scores_higher():
-    cheap = make_listing(id="c1", price=5000)
-    expensive = make_listing(id="e1", price=12000)
+    cheap = make_listing(id="c1", price=5000, market_price=8000)
+    expensive = make_listing(id="e1", price=12000, market_price=8000)
     score_listings([cheap, expensive])
     assert cheap.deal_score > expensive.deal_score, "Cheaper listing should score higher"
     print(f"PASS: cheap={cheap.deal_score:.1f} > expensive={expensive.deal_score:.1f}")

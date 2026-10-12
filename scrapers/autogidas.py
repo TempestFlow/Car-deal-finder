@@ -34,70 +34,36 @@ def _normalize_fuel(text: str) -> str:
 
 
 class AutogidasScraper(BaseScraper):
+    # When filtered results run out, autogidas pads pages with unfiltered "similar" listings;
+    # BaseScraper._search stops at the first page where no card passes the filter
+    item_selector = "div.article-item"
+
     @property
     def source_name(self) -> str:
         return "autogidas"
 
-    def scrape(self) -> list:
-        listings = []
-        seen_urls: set = set()
-        makes = self.filters.get("makes") or [""]  # empty string = no make filter
+    def _search_url(self, target: tuple[str, str], params: dict, page: int) -> str:
+        # autogidas filters make/model via URL path: /skelbimai/automobiliai/toyota/corolla/
+        make, model = target
+        params = dict(params, page=page) if page > 1 else params
+        return f"{BASE_URL}{SEARCH_PATH}{_slug(make)}/{_slug(model)}/?{urlencode(params)}"
 
-        # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
-        search_cache = self.settings.get("use_html_cache", True)
+    def _market_params(self, target: tuple[str, str], year_from: int, year_to: int) -> dict:
+        return {"f_41": year_from, "f_42": year_to}
 
-        for make in makes:
-            # autogidas filters by make via URL path: /skelbimai/automobiliai/toyota/
-            make_path = f"{SEARCH_PATH}{make.lower()}/" if make else SEARCH_PATH
-            base_params = self._build_params()
-            logger.info("autogidas: scraping make=%r path=%s", make or "all", make_path)
-
-            for page in range(1, self.settings["max_pages"] + 1):
-                params = dict(base_params)
-                if page > 1:
-                    params["page"] = page
-                qs = f"?{urlencode(params)}" if params else ""
-                url = f"{BASE_URL}{make_path}{qs}"
-                logger.info("autogidas page %d: %s", page, url)
-
-                soup = self._get_page(url, use_cache=search_cache)
-                if soup is None:
-                    break
-
-                items = soup.select("div.article-item")
-                if not items:
-                    logger.info("No listings on page %d, stopping", page)
-                    break
-
-                for item in items:
-                    try:
-                        listing = self._parse_item(item)
-                        if listing and listing.url not in seen_urls and self._apply_filters(listing):
-                            seen_urls.add(listing.url)
-                            listings.append(listing)
-                    except Exception as e:
-                        logger.error("Parse error: %s", e)
-
-                logger.info("autogidas page %d: %d listings so far", page, len(listings))
-
-        if self.settings.get("enrich_details", True):
-            for listing in listings:
-                try:
-                    self._enrich_detail(listing)
-                except Exception as e:
-                    logger.debug("Detail enrich failed for %s: %s", listing.url, e)
-
-        logger.info("autogidas total: %d listings", len(listings))
-        return listings
-
-    def _build_params(self) -> dict:
+    def _build_params(self, target: tuple[str, str]) -> dict:
+        # autogidas search form field names (select[name=f_*] on the search page)
         p: dict = {}
+        if self.filters.get("price_min"):
+            p["f_215"] = self.filters["price_min"]
         if self.filters.get("price_max"):
-            p["price_to"] = self.filters["price_max"]
+            p["f_216"] = self.filters["price_max"]
         if self.filters.get("year_min"):
-            p["year_from"] = self.filters["year_min"]
+            p["f_41"] = self.filters["year_min"]
         if self.filters.get("year_max"):
-            p["year_to"] = self.filters["year_max"]
+            p["f_42"] = self.filters["year_max"]
+        if self.filters.get("city"):
+            p["f_13"] = self.filters["city"]
         return p
 
     def _parse_item(self, item) -> CarListing | None:
@@ -128,15 +94,18 @@ class AutogidasScraper(BaseScraper):
             if src and not src.startswith("data:") and "svg" not in src:
                 images.append(src)
 
-        # Parameters: span.parameter-value → [year "2010 m.", fuel, mileage "237 000 km", ...]
+        # Parameters: span.parameter-value → [year "2010 m.", fuel, mileage "237 000 km", ..., "Vilnius, Lietuva"]
         param_spans = [s.get_text(strip=True) for s in item.select("span.parameter-value")]
 
         year = 0
         fuel_type = ""
         mileage = 0
+        city = ""
         for p in param_spans:
             low = p.lower()
-            if not year and re.match(r"\d{4}", p):
+            if not city and low.endswith("lietuva"):
+                city = p.split(",")[0].strip()
+            elif not year and re.match(r"\d{4}", p):
                 year = _parse_year(p)
             elif not fuel_type and any(k in low for k in FUEL_KEYWORDS):
                 fuel_type = _normalize_fuel(p)
@@ -165,6 +134,7 @@ class AutogidasScraper(BaseScraper):
             images=images,
             damage=damage,
             damage_info=damage_info,
+            city=city,
         )
 
     def _enrich_detail(self, listing: CarListing):
@@ -193,6 +163,23 @@ class AutogidasScraper(BaseScraper):
             if damage:
                 listing.damage = damage
                 listing.damage_info = damage_info
+
+        if not listing.technical_inspection:
+            listing.technical_inspection = _extract_ta(soup)
+
+
+def _extract_ta(soup) -> str:
+    """autogidas detail page: div.list-striped-item-title "TA iki" + div.list-striped-item-value "2027-05"."""
+    for title in soup.select("div.list-striped-item-title"):
+        if title.get_text(strip=True).lower().startswith("ta iki"):
+            value = title.find_next_sibling("div", class_="list-striped-item-value")
+            if value:
+                return value.get_text(strip=True)
+    return ""
+
+
+def _slug(name: str) -> str:
+    return name.lower().replace(" ", "-")
 
 
 def _detect_damage(text_lower: str) -> tuple[bool, str]:
