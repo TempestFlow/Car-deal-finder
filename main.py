@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 
-from config import FILTERS, OUTPUT_FILE, INSIGHTS_FILE, SCRAPER_SETTINGS, TOP_N_RESULTS
+from config import FILTERS, OUTPUT_FILE, INSIGHTS_FILE, SCRAPER_SETTINGS, TARGETS, TOP_N_RESULTS
 from models import CarListing
 from scrapers.autoplius import AutopliusScraper
 from scrapers.autogidas import AutogidasScraper
@@ -19,10 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 def _select_diverse(listings: list, top_n: int, per_make: int = 5) -> list:
-    """Return up to top_n listings ensuring every make gets at least per_make slots."""
+    """Return up to top_n listings ensuring every make+model gets at least per_make slots."""
     by_make: dict[str, list] = {}
     for l in listings:
-        by_make.setdefault(l.make.lower(), []).append(l)
+        model = l.model.split()[0] if l.model else ""
+        by_make.setdefault(f"{l.make} {model}".lower(), []).append(l)
 
     selected_ids: set = set()
     result = []
@@ -60,8 +61,8 @@ def main():
             scraper_settings["use_html_cache"] = False
             logger.info("--fresh: HTML page cache bypassed, fetching live pages")
         scrapers = [
-            AutopliusScraper(FILTERS, scraper_settings),
-            AutogidasScraper(FILTERS, scraper_settings),
+            AutopliusScraper(FILTERS, scraper_settings, TARGETS),
+            AutogidasScraper(FILTERS, scraper_settings, TARGETS),
         ]
 
         all_listings: list[CarListing] = []
@@ -77,6 +78,8 @@ def main():
                         all_listings.append(listing)
             except Exception as e:
                 logger.error("Scraper %s failed: %s", scraper.source_name, e)
+            finally:
+                scraper.close()
 
         logger.info("Total unique listings collected: %d", len(all_listings))
 

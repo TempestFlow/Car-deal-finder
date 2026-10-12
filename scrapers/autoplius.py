@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 BASE_URL = "https://autoplius.lt"
 SEARCH_PATH = "/skelbimai/naudoti-automobiliai"
+PAGE_SIZE = 20  # Listing cards per search page
 
 # Numeric IDs from autoplius.lt make dropdown (select[name='make_id_list'])
 AUTOPLIUS_MAKE_IDS: dict[str, int] = {
@@ -22,6 +23,19 @@ AUTOPLIUS_MAKE_IDS: dict[str, int] = {
     "Nissan": 62, "Opel": 60, "Peugeot": 59, "Renault": 54,
     "Seat": 49, "Skoda": 48, "Subaru": 46, "Suzuki": 45,
     "Toyota": 44, "Volkswagen": 43, "Volvo": 42,
+}
+
+# Numeric model IDs (hidden input model_id on /skelbimai/naudoti-automobiliai/{make}/{model})
+AUTOPLIUS_MODEL_IDS: dict[tuple[str, str], int] = {
+    ("Toyota", "Corolla"): 253,
+    ("Toyota", "Prius"): 225,
+    ("Honda", "Civic"): 979,
+    ("Skoda", "Octavia"): 336,
+}
+
+# fk_place_cities_id values (country 1 = Lietuva)
+AUTOPLIUS_CITY_IDS: dict[str, int] = {
+    "Vilnius": 1, "Kaunas": 2, "Klaipėda": 3, "Šiauliai": 4, "Panevėžys": 5,
 }
 
 # Lithuanian fuel names → normalized
@@ -78,6 +92,9 @@ def _normalize_fuel(text: str) -> str:
 
 
 class AutopliusScraper(BaseScraper):
+    # autoplius sits behind a Cloudflare JS check: plain requests get 403
+    needs_browser = True
+
     @property
     def source_name(self) -> str:
         return "autoplius"
@@ -85,28 +102,24 @@ class AutopliusScraper(BaseScraper):
     def scrape(self) -> list:
         listings = []
         seen_urls: set = set()
-        makes = self.filters.get("makes") or []
-        # Build list of make_ids to iterate; empty list means no make filter (scrape all)
-        make_jobs: list[tuple[str, int | None]] = []
-        if makes:
-            for m in makes:
-                mid = AUTOPLIUS_MAKE_IDS.get(m)
-                if mid:
-                    make_jobs.append((m, mid))
-                else:
-                    logger.warning("No autoplius make_id for %r — skipping", m)
-        else:
-            make_jobs = [("all", None)]
 
         # --fresh sets use_html_cache=False; apply only to search pages, not detail pages
         search_cache = self.settings.get("use_html_cache", True)
 
-        for make_name, make_id in make_jobs:
-            base_params = self._build_params(make_id)
-            logger.info("autoplius: scraping make=%s (id=%s)", make_name, make_id)
+        for target in self.targets:
+            make, model = target
+            make_id = AUTOPLIUS_MAKE_IDS.get(make)
+            model_id = AUTOPLIUS_MODEL_IDS.get(target)
+            if not make_id or not model_id:
+                logger.warning("No autoplius make/model id for %s %s — skipping", make, model)
+                continue
+
+            base_params = self._build_params(make_id, model_id)
+            logger.info("autoplius: scraping %s %s (make_id=%s, model_id=%s)", make, model, make_id, model_id)
             for page in range(1, self.settings["max_pages"] + 1):
                 params = dict(base_params)
-                params["page"] = page
+                if page > 1:
+                    params["page_nr"] = page
                 url = f"{BASE_URL}{SEARCH_PATH}?{urlencode(params)}"
                 logger.info("autoplius page %d: %s", page, url)
 
@@ -115,20 +128,24 @@ class AutopliusScraper(BaseScraper):
                     break
 
                 items = soup.select("a.announcement-item")
-                if not items:
-                    logger.info("No listings on page %d, stopping", page)
-                    break
-
+                new_on_page = 0
                 for item in items:
                     try:
                         listing = self._parse_item(item)
-                        if listing and listing.url not in seen_urls and self._apply_filters(listing):
-                            seen_urls.add(listing.url)
-                            listings.append(listing)
                     except Exception as e:
                         logger.error("Parse error: %s", e)
+                        continue
+                    if not listing or listing.url in seen_urls:
+                        continue
+                    seen_urls.add(listing.url)
+                    new_on_page += 1
+                    if self._apply_filters(listing, target):
+                        listings.append(listing)
 
-                logger.info("autoplius page %d: %d listings so far", page, len(listings))
+                logger.info("autoplius page %d: %d new cards, %d listings so far", page, new_on_page, len(listings))
+                # A short page is the last one — skip the request for an empty next page
+                if not new_on_page or len(items) < PAGE_SIZE:
+                    break
 
         if self.settings.get("enrich_details", True):
             for listing in listings:
@@ -137,19 +154,31 @@ class AutopliusScraper(BaseScraper):
                 except Exception as e:
                     logger.debug("Detail enrich failed for %s: %s", listing.url, e)
 
+        listings = self._final_filter(listings)
         logger.info("autoplius total: %d listings", len(listings))
         return listings
 
-    def _build_params(self, make_id: int | None = None) -> dict:
-        p: dict = {}
-        if make_id:
-            p["make_id"] = make_id
+    def _build_params(self, make_id: int, model_id: int) -> dict:
+        # autoplius search form field names; note price is sell_price_*, year is make_date_*
+        p: dict = {"category_id": 2, "make_id": make_id, "model_id": model_id}
         if self.filters.get("year_min"):
-            p["year_from"] = self.filters["year_min"]
+            p["make_date_from"] = self.filters["year_min"]
         if self.filters.get("year_max"):
-            p["year_to"] = self.filters["year_max"]
+            p["make_date_to"] = self.filters["year_max"]
+        if self.filters.get("price_min"):
+            p["sell_price_from"] = self.filters["price_min"]
         if self.filters.get("price_max"):
-            p["price_to"] = self.filters["price_max"]
+            p["sell_price_to"] = self.filters["price_max"]
+        city = self.filters.get("city")
+        if city:
+            city_id = AUTOPLIUS_CITY_IDS.get(city)
+            if city_id:
+                p["fk_place_countries_id"] = 1
+                p["fk_place_cities_id"] = city_id
+            else:
+                logger.warning("No autoplius city id for %r — city filtered after scraping only", city)
+        if self.filters.get("ta_min"):
+            p["technical_passport"] = 1  # "Galiojanti TA" — exact date checked on the detail page
         return p
 
     def _parse_item(self, item) -> CarListing | None:

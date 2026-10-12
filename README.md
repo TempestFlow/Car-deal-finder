@@ -19,7 +19,7 @@ A local Python tool that scrapes Lithuanian car listing sites, scores every list
 ```
 car-deal-finder/
 ├── main.py              # Entry point — orchestrates scraping, scoring, and output
-├── config.py            # All user settings live here (makes, price cap, pages, etc.)
+├── config.py            # All user settings live here (target models, price, city, TA)
 ├── models.py            # CarListing dataclass
 ├── scorer.py            # Deal-scoring logic and reliable-model bonuses
 ├── renderer.py          # Jinja2 HTML template + render function
@@ -70,30 +70,50 @@ pip install -r requirements.txt
 Open `config.py` and set your preferences — no command-line arguments needed.
 
 ```python
-FILTERS = {
-    # Car brands to search. Empty list = all makes on the site.
-    "makes": ["Toyota", "Volkswagen", "BMW", "Audi", "Mercedes-Benz",
-              "Skoda", "Opel", "Ford", "Renault", "Honda",
-              "Hyundai", "Kia", "Mazda", "Volvo"],
+TARGETS = [                 # Only these make/model pairs are searched
+    ("Toyota", "Corolla"), ("Honda", "Civic"),
+    ("Skoda", "Octavia"), ("Toyota", "Prius"),
+]
 
-    "models": [],           # Not yet used by scrapers; reserved for future filtering
-    "year_min": 2010,       # Minimum registration year
-    "year_max": 2022,       # Maximum registration year
-    "price_max": 15000,     # Maximum price in EUR
+FILTERS = {
+    "price_min": 1500,      # EUR
+    "price_max": 4500,      # EUR
+    "city": "Vilnius",      # Listing location
+    "ta_min": "2028-01",    # Techninė apžiūra must be valid at least until YYYY-MM
+    "year_min": None,
+    "year_max": None,
     "fuel_types": [],       # e.g. ["Diesel", "Petrol"] — empty means all fuel types
 }
 
 SCRAPER_SETTINGS = {
-    "max_pages": 10,         # Pages to fetch per make per site (more = slower but more results)
+    "max_pages": 5,          # Pages per model per site; stops early when a page has nothing new
     "request_delay": 1.5,    # Seconds to wait between requests (be polite to the servers)
     "timeout": 10,           # HTTP timeout in seconds
-    "enrich_details":False,  # Set True to visit each listing page for seller type, date,
-                             # and damage info — much slower but more accurate scoring
+    "enrich_details": True,  # Required — the TA date is only on the listing detail page
 }
 
 OUTPUT_FILE = "output/results.html"
 TOP_N_RESULTS = 150          # Max listings shown in the output file
 ```
+
+All filters are put into the site search URL, so only matching listings are downloaded:
+
+| Filter | autogidas.lt | autoplius.lt |
+|---|---|---|
+| Make / model | URL path `/toyota/corolla/` | `make_id`, `model_id` |
+| Price | `f_215` / `f_216` | `sell_price_from` / `sell_price_to` |
+| City | `f_13=Vilnius` | `fk_place_countries_id=1&fk_place_cities_id=1` |
+| Year | `f_41` / `f_42` | `make_date_from` / `make_date_to` |
+| TA | — (checked on detail page) | `technical_passport=1` + exact date checked on detail page |
+
+Listings whose TA is missing, unknown or earlier than `ta_min` are dropped.
+
+### autoplius.lt and Cloudflare
+
+autoplius.lt answers plain HTTP requests with a Cloudflare check (HTTP 403), so it is fetched with a
+**visible** Microsoft Edge window driven by Playwright (headless mode does not pass the check). The
+browser profile is kept in `cache/browser_profile/`, so the check normally runs only once. On Windows
+the installed Edge is used; elsewhere run `playwright install chromium` once.
 
 ---
 
@@ -144,7 +164,7 @@ AutogidasScraper  ──┴──▶  score_listings()  ──▶  _select_diver
 ### Scrapers (`scrapers/autoplius.py`, `scrapers/autogidas.py`)
 
 Each scraper:
-- Builds search URLs from your `FILTERS` (make, year range, max price)
+- Builds search URLs from `TARGETS` + `FILTERS` (model, price range, city, TA)
 - Fetches listing pages with a browser-like `User-Agent` and `Accept-Language: lt` header
 - Caches raw HTML to `cache/<source>/` (MD5-keyed per URL)
 - Parses each listing card for: URL, title, make, model, year, price, mileage, fuel type, and thumbnail image
@@ -204,7 +224,7 @@ A single self-contained `results.html` with no external dependencies:
 - **Cache is your friend:** the tool never re-downloads a page it has already cached. Delete `cache/` only when you want fully fresh data.
 - **Price drops:** run the tool twice over consecutive days. On the second run, listings whose price fell since the first run get a +15 freshness bonus, surfacing motivated sellers.
 - **Adjust `max_pages`:** autoplius.lt typically returns 30–40 listings per page, so `max_pages: 10` can yield up to ~400 listings per make before deduplication and filtering.
-- **Narrow your search:** if results are too noisy, add specific models to `FILTERS["makes"]` or tighten `year_min`/`price_max`.
+- **Change the search:** edit `TARGETS` (autoplius also needs the model's id in `AUTOPLIUS_MODEL_IDS`) or the ranges in `FILTERS`.
 
 ---
 
@@ -216,7 +236,7 @@ A single self-contained `results.html` with no external dependencies:
 | `beautifulsoup4` + `lxml` | HTML parsing |
 | `python-dateutil` | Parsing Lithuanian date strings |
 | `Jinja2` | HTML templating |
-| `playwright` | Optional — only needed if a site requires JavaScript rendering |
+| `playwright` | Drives a real browser for autoplius.lt (Cloudflare check) |
 
 ---
 

@@ -1,21 +1,25 @@
+TARGETS = [                                      # (make, model) — only these are searched
+    ("Toyota", "Corolla"),
+    ("Honda", "Civic"),
+    ("Skoda", "Octavia"),
+    ("Toyota", "Prius"),
+]
+
 FILTERS = {
-    "makes": [                                   # Empty list = all makes
-        "Toyota", "Volkswagen", "BMW", "Audi", "Mercedes-Benz",
-        "Skoda", "Opel", "Ford", "Renault", "Honda",
-        "Hyundai", "Kia", "Mazda", "Volvo",
-    ],
-    "models": [],                                # Empty list = all models
-    "year_min": 2010,
-    "year_max": 2022,
-    "price_max": 15000,                          # EUR
+    "price_min": 1500,                           # EUR
+    "price_max": 4500,                           # EUR
+    "city": "Vilnius",                           # Listing location (applied in the site search URL)
+    "ta_min": "2028-01",                         # Techninė apžiūra must be valid at least until YYYY-MM
+    "year_min": None,
+    "year_max": None,
     "fuel_types": [],                            # Empty = all fuels. e.g. ["Diesel", "Petrol"]
 }
 
 SCRAPER_SETTINGS = {
-    "max_pages": 5,
+    "max_pages": 5,           # Per model; stops earlier when a page has no new listings
     "request_delay": 1.5,
     "timeout": 10,
-    "enrich_details": True,   # Fetches detail pages for seller type, city fallback & Techninė apžiūra
+    "enrich_details": True,   # Required: detail pages hold the TA date, seller type & city
 }
 
 OUTPUT_FILE = "output/results.html"
